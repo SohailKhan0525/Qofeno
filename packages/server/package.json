@@ -1,0 +1,25 @@
+{
+  "name": "@agent-qofeno/server",
+  "version": "0.1.0",
+  "description": "Qofeno self-hosted HTTP API + web console",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@agent-qofeno/core": "0.1.0",
+    "@agent-qofeno/cli": "0.1.0",
+    "@agent-qofeno/security": "0.1.0",
+    "@agent-qofeno/providers": "0.1.0"
+  }
+}

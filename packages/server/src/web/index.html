@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qofeno</title>
+<style>
+  :root { --bg:#101418; --fg:#e6e6e6; --muted:#8b949e; --accent:#4ea1ff; --ok:#3fb950; --err:#f85149; }
+  @media (prefers-color-scheme: light) { :root { --bg:#fafafa; --fg:#111; --muted:#667; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font: 15px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--fg); display:flex; height:100vh; }
+  aside { width: 260px; border-right:1px solid #ffffff22; padding:12px; overflow:auto; }
+  main { flex:1; display:flex; flex-direction:column; min-width:0; }
+  #log { flex:1; overflow:auto; padding:16px; }
+  form { display:flex; gap:8px; padding:12px; border-top:1px solid #ffffff22; }
+  textarea { flex:1; background:transparent; color:var(--fg); border:1px solid #ffffff33; border-radius:8px; padding:10px; resize:none; min-height:44px; }
+  button, select { background:var(--accent); color:#fff; border:0; border-radius:8px; padding:8px 14px; cursor:pointer; }
+  .msg { margin: 0 0 14px; }
+  .who { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:2px; }
+  pre { white-space:pre-wrap; word-wrap:break-word; margin:0; font-family:inherit; }
+  a.skip { position:absolute; left:-999px; top:0; background:var(--accent); color:#fff; padding:8px; z-index:10; }
+  a.skip:focus { left:8px; }
+  [aria-live] .flash { animation: none; }
+  @media (max-width: 720px) { aside { display:none; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#input">Skip to composer</a>
+<aside>
+  <h2>Qofeno</h2>
+  <p><label for="model">Model</label><br><select id="model"><option value="">auto (policy-routed)</option></select></p>
+  <nav aria-label="Sections">
+    <p><a href="#" id="nav-memory">Memory</a></p>
+    <p><a href="/" >Sessions</a></p>
+  </nav>
+  <section id="memory-panel" hidden>
+    <h3>Memory</h3>
+    <ul id="mem-list"></ul>
+    <form id="mem-form"><input id="mem-text" placeholder="remember…" aria-label="New memory"><button>Add</button></form>
+  </section>
+</aside>
+<main>
+  <div id="log" role="log" aria-live="polite" aria-label="Conversation"></div>
+  <form id="composer">
+    <textarea id="input" rows="2" placeholder="Message qofeno… (Enter to send)" aria-label="Message"></textarea>
+    <button type="submit">Send</button>
+  </form>
+</main>
+<script type="module">
+const $ = (s) => document.querySelector(s);
+function addMsg(who, text) {
+  const d = document.createElement("div");
+  d.className = "msg";
+  const w = document.createElement("div"); w.className = "who"; w.textContent = who;
+  const p = document.createElement("pre"); p.textContent = text;
+  d.append(w, p); $("#log").append(d);
+  $("#log").scrollTop = $("#log").scrollHeight;
+}
+async function jfetch(url, opts) {
+  const r = await fetch(url, { headers: { "Content-Type": "application/json" }, ...opts });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.status);
+  return r.json();
+}
+// Models
+jfetch("/api/models").then(({models}) => {
+  for (const m of models) {
+    const o = document.createElement("option");
+    o.value = m.id; o.textContent = `${m.id}${m.destination === "local" ? " ·local" : ""}`;
+    $("#model").append(o);
+  }
+}).catch(() => {});
+// Memory panel
+async function loadMemories() {
+  try {
+    const { memories } = await jfetch("/api/memory");
+    const ul = $("#mem-list"); ul.textContent = "";
+    for (const m of memories) {
+      const li = document.createElement("li");
+      li.textContent = m.content.slice(0, 60);
+      const x = document.createElement("button"); x.textContent = "✕"; x.setAttribute("aria-label", "Delete memory");
+      x.onclick = async () => { await jfetch("/api/memory/" + m.id, { method: "DELETE" }); loadMemories(); };
+      li.append(x); ul.append(li);
+    }
+  } catch {}
+}
+$("#nav-memory").onclick = (e) => { e.preventDefault(); const p = $("#memory-panel"); p.hidden = !p.hidden; if (!p.hidden) loadMemories(); };
+$("#mem-form").onsubmit = async (e) => {
+  e.preventDefault();
+  const t = $("#mem-text").value.trim(); if (!t) return;
+  await jfetch("/api/memory", { method: "POST", body: JSON.stringify({ content: t }) });
+  $("#mem-text").value = ""; loadMemories();
+};
+// Chat
+let busy = false;
+$("#composer").onsubmit = async (e) => {
+  e.preventDefault();
+  if (busy) return;
+  const text = $("#input").value.trim(); if (!text) return;
+  busy = true;
+  addMsg("you", text);
+  $("#input").value = "";
+  try {
+    const { result, error, model } = await jfetch("/api/chat", {
+      method: "POST",
+      body: JSON.stringify({ prompt: text, modelId: $("#model").value || undefined }),
+    });
+    addMsg(error ? `error (${model ?? ""})` : `qofeno${model ? " · " + model : ""}`, error ?? result);
+  } catch (err) {
+    addMsg("error", String(err.message ?? err));
+  }
+  busy = false;
+};
+$("#input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#composer").requestSubmit(); }
+});
+addMsg("system", "Qofeno web console. Configure providers with `qofeno provider add`, then chat here. Nothing leaves your machine without an explicitly allowed provider.");
+</script>
+</body>
+</html>

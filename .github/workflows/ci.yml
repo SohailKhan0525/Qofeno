@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [20, 22, 24]
+        exclude:
+          - os: macos-latest
+            node: 20
+          - os: windows-latest
+            node: 20
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - run: npm run lint
+      - name: CLI smoke (real binary)
+        shell: bash
+        run: |
+          node packages/cli/dist/src/main.js version
+          node packages/cli/dist/src/main.js doctor
+          node packages/cli/dist/src/main.js tools list
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: dependency audit (non-blocking advisory gate)
+        run: npm audit --omit=dev || true
+      - name: license sanity — zero runtime deps per package
+        run: |
+          node -e '
+            const fs=require("fs");
+            for (const dir of fs.readdirSync("packages")) {
+              const pkg=JSON.parse(fs.readFileSync(`packages/${dir}/package.json`,"utf8"));
+              const deps=Object.keys(pkg.dependencies||{});
+              const foreign=deps.filter(d=>!d.startsWith("@agent-qofeno/"));
+              if (foreign.length) { console.error(`${pkg.name} has foreign runtime deps: ${foreign}`); process.exit(1); }
+            }
+            console.log("supply-chain check ok: internal-only runtime dependencies");'
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t qofeno:ci .

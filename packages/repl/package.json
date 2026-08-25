@@ -1,0 +1,30 @@
+{
+  "name": "@agent-qofeno/repl",
+  "version": "0.1.0",
+  "description": "Qofeno CLI - repl",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test dist/test/"
+  },
+  "dependencies": {
+    "@agent-qofeno/core": "0.1.0",
+    "@agent-qofeno/config": "0.1.0",
+    "@agent-qofeno/session": "0.1.0",
+    "@agent-qofeno/knowledge": "0.1.0",
+    "@agent-qofeno/ctx": "0.1.0",
+    "@agent-qofeno/tools": "0.1.0",
+    "@agent-qofeno/providers": "0.1.0",
+    "@agent-qofeno/term": "0.1.0",
+    "@agent-qofeno/input": "0.1.0"
+  }
+}

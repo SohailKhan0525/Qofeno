@@ -1,0 +1,62 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "packages/core"
+    },
+    {
+      "path": "packages/security"
+    },
+    {
+      "path": "packages/storage"
+    },
+    {
+      "path": "packages/providers"
+    },
+    {
+      "path": "packages/runtime"
+    },
+    {
+      "path": "packages/term"
+    },
+    {
+      "path": "packages/input"
+    },
+    {
+      "path": "packages/config"
+    },
+    {
+      "path": "packages/session"
+    },
+    {
+      "path": "packages/knowledge"
+    },
+    {
+      "path": "packages/ctx"
+    },
+    {
+      "path": "packages/tools"
+    },
+    {
+      "path": "packages/agents"
+    },
+    {
+      "path": "packages/workflows"
+    },
+    {
+      "path": "packages/ext"
+    },
+    {
+      "path": "packages/repl"
+    },
+    {
+      "path": "packages/cli"
+    },
+    {
+      "path": "packages/server"
+    },
+    {
+      "path": "packages/github-bot"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.tsbuildinfo
+coverage/
+.qofeno/
+*.log
+.DS_Store
+.env
+.env.local
