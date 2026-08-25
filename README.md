@@ -21,7 +21,7 @@
 ## Quick start
 
 ```bash
-npm install -g @agent-qofeno/cli     # or: npm i && npm run build from source
+npm install -g @agent-qofeno/qofeno-cli     # or: npm i && npm run build from source
 qofeno doctor                        # environment diagnostics
 qofeno provider add ollama           # local models first
 ollama pull llama3.2                 # you choose what to download — never us
