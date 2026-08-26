@@ -19,6 +19,10 @@ export default [
         performance: "readonly",
         structuredClone: "readonly",
         crypto: "readonly",
+        self: "readonly",
+        caches: "readonly",
+        clients: "readonly",
+        skipWaiting: "readonly",
       },
     },
     rules: {
