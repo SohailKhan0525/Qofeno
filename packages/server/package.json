@@ -18,9 +18,9 @@
   },
   "dependencies": {
     "@agent-qofeno/core": "0.1.0",
-    "@agent-qofeno/security": "0.1.0",
-    "@agent-qofeno/providers": "0.1.0",
+    "@agent-qofeno/security": "0.1.2",
+    "@agent-qofeno/providers": "0.1.2",
     "@agent-qofeno/bundle": "0.1.0",
-    "@agent-qofeno/qofeno-cli": "0.1.2"
+    "@agent-qofeno/qofeno-cli": "0.1.7"
   }
 }

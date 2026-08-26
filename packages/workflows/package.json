@@ -18,6 +18,6 @@
   },
   "dependencies": {
     "@agent-qofeno/core": "0.1.0",
-    "@agent-qofeno/tools": "0.1.0"
+    "@agent-qofeno/tools": "0.1.3"
   }
 }

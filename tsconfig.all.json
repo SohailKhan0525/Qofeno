@@ -11,10 +11,10 @@
       "path": "packages/storage"
     },
     {
-      "path": "packages/providers"
+      "path": "packages/runtime"
     },
     {
-      "path": "packages/runtime"
+      "path": "packages/providers"
     },
     {
       "path": "packages/term"

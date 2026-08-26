@@ -22,8 +22,8 @@
     "@agent-qofeno/session": "0.1.0",
     "@agent-qofeno/knowledge": "0.1.0",
     "@agent-qofeno/ctx": "0.1.0",
-    "@agent-qofeno/tools": "0.1.0",
-    "@agent-qofeno/providers": "0.1.0",
+    "@agent-qofeno/tools": "0.1.3",
+    "@agent-qofeno/providers": "0.1.2",
     "@agent-qofeno/term": "0.1.0",
     "@agent-qofeno/input": "0.1.0"
   }

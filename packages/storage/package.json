@@ -15,5 +15,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "node --test dist/test/"
+  },
+  "dependencies": {
+    "@agent-qofeno/core": "0.1.0"
   }
 }
