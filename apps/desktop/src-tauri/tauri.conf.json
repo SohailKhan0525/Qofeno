@@ -44,7 +44,11 @@
     "publisher": "Qofeno",
     "copyright": "Apache-2.0",
     "shortDescription": "Terminal-native AI agent \u2014 desktop app",
-    "longDescription": "Qofeno desktop: local-first AI conversations, projects, files, memory, knowledge, agents and workflows over the shared Qofeno engine."
+    "longDescription": "Qofeno desktop: local-first AI conversations, projects, files, memory, knowledge, agents and workflows over the shared Qofeno engine.",
+    "android": {
+      "minSdkVersion": 24,
+      "targetSdkVersion": 35
+    }
   },
   "plugins": {
     "updater": {

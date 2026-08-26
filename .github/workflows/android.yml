@@ -40,11 +40,11 @@ jobs:
           npm i -g @tauri-apps/cli@2
           cargo install cargo-ndk --locked
 
-      - name: Init android project (idempotent)
-        working-directory: apps/app
+      - name: Init android project
+        working-directory: apps/desktop/src-tauri
         run: |
-          if [ ! -d src-tauri/gen/android ]; then
-            npx @tauri-apps/cli android init --ci || echo "::warning::android init needs interactive scaffold; using committed gen/ when present"
+          if [ ! -d gen/android ]; then
+            npx @tauri-apps/cli android init --ci
           fi
 
       - name: Decode signing keystore (signed runs only)
@@ -59,23 +59,23 @@ jobs:
           echo "$QOFENO_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/qofeno.jks"
           echo "QOFENO_KEYSTORE_PATH=$RUNNER_TEMP/qofeno.jks" >> "$GITHUB_ENV"
 
-      - name: Build APK/AAB
-        id: build
-        working-directory: apps/app
+      - name: Build APK/AAB (unsigned unless signing env provided)
+        working-directory: apps/desktop/src-tauri
         env:
           QOFENO_KEYSTORE_PATH: ${{ env.QOFENO_KEYSTORE_PATH }}
           QOFENO_KEYSTORE_PASSWORD: ${{ secrets.QOFENO_KEYSTORE_PASSWORD }}
           QOFENO_KEY_ALIAS: ${{ secrets.QOFENO_KEY_ALIAS }}
           QOFENO_KEY_PASSWORD: ${{ secrets.QOFENO_KEY_PASSWORD }}
         run: |
-          set -o pipefail
+          # Fail loudly: an empty artifact list must fail this job.
           if [ -n "$QOFENO_KEYSTORE_PATH" ]; then
             npx @tauri-apps/cli android build --target aarch64 --apk --aab 2>&1 | tee build.log
           else
-            echo "::notice::building UNSIGNED artifacts (fork-safe)"
-            npx @tauri-apps/cli android build --target aarch64 --apk --aab \
-              $( [ -n "${{ secrets.QOFENO_KEYSTORE_PASSWORD }}" ] && echo "" || echo "--debug" ) 2>&1 | tee build.log || true
+            echo "::notice::building UNSIGNED debug-signable artifacts (fork-safe)"
+            npx @tauri-apps/cli android build --target aarch64 --apk --debug 2>&1 | tee build.log
           fi
+          found=$(find gen/android -name "*.apk" -o -name "*.aab" | head -1)
+          if [ -z "$found" ]; then echo "::error::no APK/AAB produced"; exit 1; fi
 
       - name: Verify signature (evidence for docs/compatibility.md)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.signed }}
