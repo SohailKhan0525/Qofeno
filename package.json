@@ -1,7 +1,7 @@
 {
   "name": "qofeno",
   "version": "0.1.0",
-  "description": "Qofeno CLI — an open-source, terminal-native AI agent platform. Local-first, provider-neutral, permission-enforced.",
+  "description": "Qofeno CLI \u2014 an open-source, terminal-native AI agent platform. Local-first, provider-neutral, permission-enforced.",
   "license": "Apache-2.0",
   "type": "module",
   "private": true,
@@ -9,10 +9,11 @@
     "node": ">=20.12"
   },
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "apps/app"
   ],
   "scripts": {
-    "build": "tsc -b tsconfig.all.json",
+    "build": "tsc -b tsconfig.all.json && npm run -w @agent-qofeno/app build",
     "typecheck": "tsc -b tsconfig.all.json",
     "test": "tsc -b tsconfig.all.json && node --test packages/*/dist/test/*.test.js",
     "lint": "eslint .",

@@ -533,7 +533,8 @@ async function runManagementCommand(command: string, bundle: Bundle, args: Retur
       const { createRequire } = await import("node:module");
       const requireSrv = createRequire(import.meta.url);
       const srvPkgPath = requireSrv.resolve("@agent-qofeno/server/package.json");
-      const webDir = join(srvPkgPath, "..", "src", "web");
+      let webDir = join(srvPkgPath, "..", "..", "..", "apps", "app", "dist");
+      if (!existsSync(join(webDir, "index.html"))) webDir = join(srvPkgPath, "..", "src", "web");
       const port = Number(args.flags.port ?? process.env.QOFENO_PORT ?? 7931);
       const token = typeof args.flags.token === "string" ? String(args.flags.token) : process.env.QOFENO_API_TOKEN;
       await startServer({ port, apiToken: token, staticDir: webDir });

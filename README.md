@@ -4,11 +4,12 @@
 
 | Product | What it is | Entry point |
 |---|---|---|
-| **Qofeno CLI** | A terminal-native coding agent: interactive sessions, plan/review/execute modes, permission-enforced tools, local-first models | `qofeno` |
-| **Qofeno App** | Self-hosted web console + HTTP API over the same engine | `qofeno serve` |
-| **Qofeno GitHub Bot** | A GitHub App that automates issue/PR hygiene with verified webhooks and minimum permissions | `@agent-qofeno/github-bot` |
+| **Qofeno Terminal CLI** | Professional terminal-native AI/agent/coding environment: interactive sessions, plan/review/execute modes, permission-enforced tools, local-first models | `qofeno` |
+| **Qofeno App** | Complete graphical application for desktop (Windows/macOS/Linux) and mobile (Android), running the same shared engine locally | `qofeno serve` + shells in `apps/` |
 
-> The terminal is the product. No browser, IDE or GUI is ever required.
+GitHub automation in this repository is **internal infrastructure** (webhook-verified repository protection under `integrations/`) — not a product.
+
+> The CLI never requires a browser or GUI; the App never requires a terminal.
 
 ## Principles (enforced in code, not just words)
 
@@ -73,9 +74,15 @@ packages/
   ext/          extensions, skills, hooks, MCP stdio client compatibility
   repl/         interactive core: modes, slash commands, permission UX
   cli/          the qofeno executable + headless modes
-  server/       HTTP API + web console (the App)
-  github-bot/   GitHub App webhook service (the Bot)
+  server/       local HTTP API that powers both products
+apps/
+  app/          the Qofeno App UI (shared by desktop & mobile shells)
+  desktop/      Tauri v2 shell (Win/macOS/Linux installers)
+  mobile-android/  signed APK/AAB pipeline
+integrations/   internal repo-protection bot (not a product)
 ```
+
+Compatibility claims are evidence-gated: see [docs/compatibility.md](docs/compatibility.md).
 
 ## Building from source
 

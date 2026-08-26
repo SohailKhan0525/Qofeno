@@ -1,0 +1,18 @@
+{
+  "identifier": "main-capability",
+  "description": "Least-privilege surface for the Qofeno window: local API only.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-minimize",
+    "core:window:allow-maximize",
+    "core:window:allow-close",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "notification:allow-notify",
+    "fs:allow-read-text-file",
+    "fs:allow-write-text-file",
+    { "identifier": "http:default", "allow": [{ "url": "http://127.0.0.1:*" }, { "url": "http://localhost:11434/*" }] },
+    { "identifier": "shell:allow-execute", "allow": [{ "name": "binaries/qofeno", "sidecar": true }] }
+  ]
+}

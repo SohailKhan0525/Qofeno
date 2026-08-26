@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Qofeno</title>
+<link rel="stylesheet" href="./app.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div id="app" data-view="chat">
+  <aside id="sidebar" aria-label="Navigation">
+    <div class="brand"><span aria-hidden="true">◆</span> Qofeno</div>
+    <nav>
+      <button class="nav-btn" data-nav="chat" aria-current="page">Chat</button>
+      <button class="nav-btn" data-nav="sessions">Sessions</button>
+      <button class="nav-btn" data-nav="files">Files</button>
+      <button class="nav-btn" data-nav="memory">Memory</button>
+      <button class="nav-btn" data-nav="knowledge">Knowledge</button>
+      <button class="nav-btn" data-nav="agents">Agents</button>
+      <button class="nav-btn" data-nav="workflows">Workflows</button>
+      <button class="nav-btn" data-nav="settings">Settings &amp; Privacy</button>
+    </nav>
+    <div id="conn-state" role="status" aria-live="polite"></div>
+  </aside>
+
+  <main id="main" tabindex="-1">
+    <!-- CHAT -->
+    <section class="view" id="view-chat" aria-labelledby="h-chat">
+      <header class="view-head"><h1 id="h-chat">Chat</h1>
+        <label class="inline">Model
+          <select id="model-select"><option value="">auto (policy-routed)</option></select>
+        </label>
+      </header>
+      <div id="chat-log" role="log" aria-live="polite"></div>
+      <form id="composer">
+        <textarea id="chat-input" rows="3" placeholder="Message qofeno… (Enter to send, Shift+Enter for newline)" aria-label="Message"></textarea>
+        <button type="submit" id="send-btn">Send</button>
+      </form>
+    </section>
+
+    <!-- SESSIONS -->
+    <section class="view" id="view-sessions" hidden aria-labelledby="h-sessions">
+      <header class="view-head"><h1 id="h-sessions">Sessions</h1><button id="new-session">New session</button></header>
+      <ul id="session-list" class="card-list"></ul>
+    </section>
+
+    <!-- FILES -->
+    <section class="view" id="view-files" hidden aria-labelledby="h-files">
+      <header class="view-head"><h1 id="h-files">Project files</h1></header>
+      <div class="split">
+        <pre id="file-tree" tabindex="0" aria-label="File list"></pre>
+        <div><textarea id="file-editor" rows="22" aria-label="File contents"></textarea>
+          <div class="row"><button id="file-save">Save (atomic)</button><span id="file-status" role="status"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MEMORY -->
+    <section class="view" id="view-memory" hidden aria-labelledby="h-memory">
+      <header class="view-head"><h1 id="h-memory">Memory</h1><button id="mem-clear" class="danger">Clear all…</button></header>
+      <form id="mem-form" class="row"><input id="mem-input" placeholder="Add a memory…" aria-label="New memory"><button>Add</button></form>
+      <ul id="mem-list" class="card-list"></ul>
+    </section>
+
+    <!-- KNOWLEDGE -->
+    <section class="view" id="view-knowledge" hidden aria-labelledby="h-knowledge">
+      <header class="view-head"><h1 id="h-knowledge">Knowledge</h1></header>
+      <form id="kb-index-form" class="row">
+        <input id="kb-path" placeholder="project file to index (e.g. README.md)" aria-label="File path">
+        <button>Index</button>
+      </form>
+      <form id="kb-search-form" class="row">
+        <input id="kb-query" placeholder="Search knowledge…" aria-label="Search query">
+        <button>Search</button>
+      </form>
+      <ul id="kb-results" class="card-list" aria-live="polite"></ul>
+    </section>
+
+    <!-- AGENTS -->
+    <section class="view" id="view-agents" hidden aria-labelledby="h-agents">
+      <header class="view-head"><h1 id="h-agents">Agents</h1></header>
+      <form id="agent-form" class="row">
+        <input id="agent-goal" placeholder="Goal…" aria-label="Agent goal">
+        <input id="agent-model" placeholder="model: provider:model" aria-label="Model id">
+        <button>Run</button>
+      </form>
+      <pre id="agent-output" tabindex="0" aria-live="polite"></pre>
+    </section>
+
+    <!-- WORKFLOWS -->
+    <section class="view" id="view-workflows" hidden aria-labelledby="h-workflows">
+      <header class="view-head"><h1 id="h-workflows">Workflows</h1></header>
+      <p class="muted">Validate portable workflow definitions (qofeno.workflow/1).</p>
+      <textarea id="wf-json" rows="14" aria-label="Workflow JSON"></textarea>
+      <div class="row"><button id="wf-validate">Validate</button><span id="wf-status" role="status"></span></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="view" id="view-settings" hidden aria-labelledby="h-settings">
+      <header class="view-head"><h1 id="h-settings">Settings &amp; Privacy</h1></header>
+      <div id="privacy-report" class="card" aria-live="polite">Loading…</div>
+      <h2>Danger zone</h2>
+      <button id="wipe" class="danger">Delete ALL local data…</button>
+    </section>
+  </main>
+</div>
+<dialog id="confirm-dialog">
+  <form method="dialog">
+    <h2 id="confirm-title">Confirm</h2>
+    <p id="confirm-detail"></p>
+    <menu><button value="cancel">Cancel</button><button value="ok" id="confirm-ok">Confirm</button></menu>
+  </form>
+</dialog>
+<script>
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  navigator.serviceWorker.register("./sw.js").catch(() => {});
+}
+</script>
+<script type="module" src="./app.js"></script>
+</body>
+</html>

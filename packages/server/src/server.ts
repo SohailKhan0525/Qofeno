@@ -3,7 +3,7 @@
  * web app. `qofeno serve` runs this.
  */
 import { QofenoServer } from "./http.js";
-import { buildBundle } from "@agent-qofeno/cli";
+import { buildBundle } from "@agent-qofeno/qofeno-cli";
 import { newId, ID } from "@agent-qofeno/core";
 
 export async function startServer(opts: { port?: number; apiToken?: string; staticDir?: string; homeOverride?: string }): Promise<{ port: number }> {
@@ -114,6 +114,68 @@ export async function startServer(opts: { port?: number; apiToken?: string; stat
 
   server.route("GET", "/api/events", async (_q, res) => {
     ok(res, { events: await bundle.store.listAudit(50) });
+  });
+
+  // ---- Knowledge & agents routes used by the Qofeno App -------------------
+
+  server.route("POST", "/api/knowledge/collections", async (_q, res, _p, body) => {
+    const b = (body ?? {}) as { name?: string };
+    const col = await bundle.knowledge.ensureCollection((b.name ?? "project").slice(0, 80));
+    ok(res, { collection: col });
+  });
+
+  server.route("POST", "/api/knowledge/collections/:id/documents", async (_q, res, p, body) => {
+    const b = (body ?? {}) as { title?: string; content?: string };
+    if (!b.content?.trim()) {
+      res.writeHead(400).end(JSON.stringify({ error: "content required" }));
+      return;
+    }
+    const { createHash } = await import("node:crypto");
+    const sha = createHash("sha256").update(b.content).digest("hex");
+    const src = await bundle.knowledge.indexDocument(String(p.id), { kind: "text", title: (b.title ?? "document").slice(0, 200), content: b.content }, sha);
+    ok(res, { ok: src.indexState === "indexed", output: `${src.title}: ${src.indexState}, ${src.chunkCount} chunks` });
+  });
+
+  server.route("GET", "/api/knowledge/search", async (_q, res, _p, _b) => {
+    const q = new URL(_q.url ?? "/", "http://x").searchParams.get("q") ?? "";
+    const cols = await bundle.store.listCollections(undefined);
+    const results = await bundle.knowledge.retrieve(cols.map((c) => c.id), q.slice(0, 500), 8);
+    ok(res, { results });
+  });
+
+  server.route("POST", "/api/agents/run", async (_q, res, _p, body) => {
+    const b = (body ?? {}) as { goal?: string; modelId?: string };
+    if (!b.goal || !b.modelId?.includes(":")) {
+      res.writeHead(400).end(JSON.stringify({ error: "goal and modelId required" }));
+      return;
+    }
+    try {
+      const { AgentRuntime } = await import("@agent-qofeno/agents");
+      const routed = await (await import("@agent-qofeno/providers")).route(bundle.providers, {
+        classification: bundle.config.merged.security?.localOnly ? "local-only" : "private",
+        preferredModelId: b.modelId,
+        interactive: false,
+      });
+      const { provider } = await bundle.providers.findModel(`${routed.providerId}:${routed.modelId}`);
+      const agent = new AgentRuntime(provider, bundle.tools, bundle.context);
+      const result = await agent.run(
+        { goal: b.goal.slice(0, 2_000), modelId: `${routed.providerId}:${routed.modelId}`, interactive: false },
+        {
+          projectRoot: process.cwd(),
+          interactive: false,
+          workspaceTrusted: false,
+          classification: "private",
+          grants: [],
+          denies: [],
+          policyRules: [],
+          audit: () => {},
+          confirm: async () => false,
+        },
+      );
+      ok(res, result);
+    } catch (e) {
+      res.writeHead(502).end(JSON.stringify({ error: String((e as Error).message ?? e).slice(0, 300) }));
+    }
   });
 
   server.route("POST", "/api/jobs/_noop", async (_q, res) => {

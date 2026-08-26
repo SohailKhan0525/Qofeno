@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Qofeno",
+  "version": "0.1.0",
+  "identifier": "dev.qofeno.app",
+  "build": {
+    "frontendDist": "../../apps/app/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Qofeno",
+        "width": 1180,
+        "height": 800,
+        "minWidth": 480,
+        "minHeight": 400,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' http://127.0.0.1:7931 http://localhost:11434",
+      "capabilities": ["main-capability"]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["deb", "rpm", "appimage", "dmg", "msi", "nsis"],
+    "icon": [],
+    "publisher": "Qofeno",
+    "copyright": "Apache-2.0",
+    "shortDescription": "Terminal-native AI agent — desktop app",
+    "longDescription": "Qofeno desktop: local-first AI conversations, projects, files, memory, knowledge, agents and workflows over the shared Qofeno engine."
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "dialog": true,
+      "pubkey": "REPLACE_WITH_RELEASE_PUBKEY_AT_BUILD_TIME",
+      "endpoints": ["https://github.com/SohailKhan0525/Qofeno/releases/latest/download/latest.json"]
+    }
+  }
+}

@@ -1,0 +1,7 @@
+# Default owners for everything; security-critical paths require the lead.
+* @SohailKhan0525
+/packages/security/ @SohailKhan0525
+/packages/tools/src/registry.ts @SohailKhan0525
+/.github/workflows/ @SohailKhan0525
+/apps/desktop/ @SohailKhan0525
+/apps/mobile-android/ @SohailKhan0525

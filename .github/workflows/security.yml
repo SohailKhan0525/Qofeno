@@ -1,0 +1,66 @@
+name: Security scanning
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 4 * * 1"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  codeql:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        language: [javascript-typescript]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+      - uses: github/codeql-action/analyze@v3
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: secret pattern scan (self-contained, no third-party action)
+        run: |
+          node -e '
+            const fs=require("fs"),path=require("path");
+            const {execSync}=require("child_process");
+            const files=execSync("git ls-files").toString().split("\n").filter(f=>/\.(ts|js|mjs|json|md|yml|yaml|sh|rs|html|css)$/.test(f));
+            const patterns=[
+              /(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{30,}/,
+              /github_pat_[A-Za-z0-9_]{20,}/,
+              /\bsk-[A-Za-z0-9_-]{20,}\b/,
+              /\bAKIA[0-9A-Z]{16}\b/,
+              /-----BEGIN (?:RSA |EC )?PRIVATE KEY-----/,
+              /npm_[A-Za-z0-9]{30,}/,
+            ];
+            let fail=false;
+            for(const f of files){
+              if(/signing\/env\.example/.test(f)) continue;
+              let src; try{src=fs.readFileSync(f,"utf8")}catch{continue}
+              for(const re of patterns){ if(re.test(src)){ console.error("SECRET PATTERN in",f); fail=true; } }
+            }
+            process.exit(fail?1:0);
+          '
+
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high

@@ -1,0 +1,12 @@
+{
+  "name": "@agent-qofeno/app",
+  "version": "0.1.0",
+  "description": "Qofeno App — graphical interface for the Qofeno engine (desktop/mobile shells load this build)",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && cp src/index.html src/app.css src/sw.js dist/",
+    "test": "node --test dist/test/"
+  }
+}

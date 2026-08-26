@@ -6,52 +6,114 @@ on:
 
 permissions:
   contents: write
-  id-token: write   # artifact attestations/provenance
+  id-token: write # npm provenance / attestations
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  release:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          registry-url: https://registry.npmjs.org
+        with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm run build
       - run: npm test
-      - name: SBOM (CycloneDX JSON of workspace manifest graph)
-        run: |
-          node -e '
-            const fs = require("fs");
-            const pkgs = [];
-            for (const dir of fs.readdirSync("packages").concat("")) {
-              const p = dir ? `packages/${dir}/package.json` : "package.json";
-              if (fs.existsSync(p)) {
-                const j = JSON.parse(fs.readFileSync(p, "utf8"));
-                pkgs.push({ name: j.name || "qofeno-root", version: j.version, license: j.license || "Apache-2.0", dependencies: Object.keys(j.dependencies || {}) });
-              }
-            }
-            const sbom = { bomFormat: "CycloneDX", specVersion: "1.5", components: pkgs.map(p => ({ type: "library", name: p.name, version: p.version, licenses: [{ license: { id: p.license } }] })) };
-            fs.mkdirSync("dist-release", { recursive: true });
-            fs.writeFileSync("dist-release/sbom.json", JSON.stringify(sbom, null, 2));
-            console.log("sbom written");'
-      - name: Source tarball + checksums
-        run: |
-          mkdir -p dist-release
-          git archive --format=tar.gz -o dist-release/qofeno-${GITHUB_REF_NAME}.tar.gz HEAD
-          cd dist-release && sha256sum * > SHA256SUMS.txt
-      - name: GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            dist-release/*
-          generate_release_notes: true
-      - name: Publish to npm (@agent-qofeno scope)
+
+  npm-publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: npm-release # protected environment; fork PRs can never reach this
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, registry-url: https://registry.npmjs.org }
+      - run: npm ci
+      - run: npm run build
+      - name: SBOM (CycloneDX)
+        run: node scripts/sbom.mjs > sbom.json
+      - name: Publish changed packages with provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: bash scripts/publish-all.sh
+
+  desktop:
+    needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, target: linux }
+          - { os: windows-latest, target: windows }
+          - { os: macos-latest, target: macos }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run build
+      - name: Build desktop bundles (requires TAURI_SIGNING keys for updater)
+        continue-on-error: true # evidence-gated support; see docs/compatibility.md
         run: |
-          for p in core security storage providers runtime term input config session knowledge ctx tools agents workflows ext repl cli server github-bot; do
-            if grep -q '"private": true' packages/$p/package.json; then continue; fi
-            npm publish packages/$p --access public --provenance || true
-          done
+          npx @tauri-apps/cli@2 build --config apps/desktop/src-tauri/tauri.conf.json || \
+          echo "::warning::desktop bundle skipped on this runner — see compatibility matrix"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-${{ matrix.target }}
+          path: |
+            apps/desktop/src-tauri/target/release/bundle/**/*
+          if-no-files-found: ignore
+          retention-days: 14
+
+  android:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: mobile-release # signing creds live here only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - run: npm ci
+      - run: npm run -w @agent-qofeno/app build
+      - name: Assemble unsigned APK/AAB (signed only when keystore secrets exist)
+        continue-on-error: true
+        env:
+          QOFENO_KEYSTORE_PASSWORD: ${{ secrets.QOFENO_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$QOFENO_KEYSTORE_PASSWORD" ]; then
+            echo "::warning::no signing credentials — producing unsigned artifact"
+          fi
+          npx @tauri-apps/cli@2 android build --target aarch64 || \
+          echo "::warning::android toolchain unavailable on this runner"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-apk
+          path: |
+            **/*.apk
+            **/*.aab
+          if-no-files-found: ignore
+          retention-days: 14
+
+  github-release:
+    needs: [verify, npm-publish]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Source tarball + checksums + provenance note
+        run: |
+          mkdir -p dist-release
+          git archive --format=tar.gz -o dist-release/qofeno-${GITHUB_REF_NAME}-source.tar.gz HEAD
+          node scripts/sbom.mjs > dist-release/sbom.json
+          cd dist-release && sha256sum * > SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist-release/*
+          generate_release_notes: true
