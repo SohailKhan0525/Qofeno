@@ -22,7 +22,7 @@ import { QofenoRepl, DenyAllPrompter, type PermissionPrompter } from "@agent-qof
 import { AgentRuntime } from "@agent-qofeno/agents";
 import { WorkflowEngine } from "@agent-qofeno/workflows";
 import { ExtensionHost } from "@agent-qofeno/ext";
-import { buildBundle, type Bundle } from "./bundle.js";
+import { buildBundle, type Bundle } from "@agent-qofeno/bundle";
 import { parseArgs, USAGE, outputFormatOf } from "./args.js";
 
 const VERSION = "0.1.0";

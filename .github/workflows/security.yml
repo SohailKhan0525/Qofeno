@@ -35,7 +35,9 @@ jobs:
           node -e '
             const fs=require("fs"),path=require("path");
             const {execSync}=require("child_process");
-            const files=execSync("git ls-files").toString().split("\n").filter(f=>/\.(ts|js|mjs|json|md|yml|yaml|sh|rs|html|css)$/.test(f));
+            const files=execSync("git ls-files").toString().split("\n")
+              .filter(f=>/\.(ts|js|mjs|json|md|yml|yaml|sh|rs|html|css)$/.test(f))
+              .filter(f=>!/^(test|.*\/test)\//.test(f)); // test fixtures intentionally contain synthetic tokens
             const patterns=[
               /(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{30,}/,
               /github_pat_[A-Za-z0-9_]{20,}/,

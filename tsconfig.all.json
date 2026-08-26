@@ -47,16 +47,19 @@
       "path": "packages/ext"
     },
     {
-      "path": "packages/repl"
+      "path": "packages/bundle"
     },
     {
-      "path": "packages/cli"
+      "path": "packages/repl"
     },
     {
       "path": "packages/server"
     },
     {
       "path": "packages/github-bot"
+    },
+    {
+      "path": "packages/cli"
     }
   ]
 }

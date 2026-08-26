@@ -3,7 +3,7 @@
  * web app. `qofeno serve` runs this.
  */
 import { QofenoServer } from "./http.js";
-import { buildBundle } from "@agent-qofeno/qofeno-cli";
+import { buildBundle } from "@agent-qofeno/bundle";
 import { newId, ID } from "@agent-qofeno/core";
 
 export async function startServer(opts: { port?: number; apiToken?: string; staticDir?: string; homeOverride?: string }): Promise<{ port: number }> {
