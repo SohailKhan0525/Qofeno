@@ -23,6 +23,12 @@ export default [
         caches: "readonly",
         clients: "readonly",
         skipWaiting: "readonly",
+        Buffer: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+        require: "readonly",
       },
     },
     rules: {
