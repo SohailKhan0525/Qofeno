@@ -36,27 +36,34 @@ export class FsPathGuard implements PathGuard {
     });
   }
 
+  /**
+   * Canonical view of a possibly-nonexistent path: realpath the deepest
+   * existing ancestor, then re-append the lexical remainder. This keeps
+   * comparisons consistent with canonicalized roots on symlinked parents
+   * (macOS /var -> /private/var, Windows junctions) while still catching
+   * symlink escapes for anything that exists.
+   */
+  private effectivePath(abs: string): string {
+    if (!this.followSymlinks) return abs;
+    let probe = abs;
+    const segments: string[] = [];
+    for (;;) {
+      try {
+        let out = realpathSync(probe);
+        for (let i = segments.length - 1; i >= 0; i--) out = join(out, segments[i]!);
+        return out;
+      } catch {
+        const parent = resolve(probe, "..");
+        if (probe === parent) return abs;
+        segments.unshift(probe.slice(parent.length + 1));
+        probe = parent;
+      }
+    }
+  }
+
   assertWithinRoots(absPath: string, roots: string[]): void {
     const abs = resolve(absPath);
-    let effective = abs;
-    try {
-      if (this.followSymlinks && existsSafe(abs)) {
-        // Resolve the deepest existing ancestor so new files under symlinked dirs are caught too.
-        let probe = abs;
-        for (;;) {
-          const parent = resolve(probe, "..");
-          if (probe === parent) break;
-          try {
-            effective = realpathSync(probe);
-            break;
-          } catch {
-            probe = parent;
-          }
-        }
-      }
-    } catch {
-      /* fall back to lexical check */
-    }
+    const effective = this.effectivePath(abs);
     const ok = this.canonicalRoots(roots).some((r) => effective === r || effective.startsWith(r + sep));
     if (!ok) {
       throw new QofenoError({
