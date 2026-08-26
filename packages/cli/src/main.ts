@@ -3,6 +3,8 @@
  * qofeno main entrypoint (#CLI IDENTITY / #0108 exit code contract).
  */
 import { createInterface } from "node:readline";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { join, resolve } from "node:path";
 import { readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -25,7 +27,14 @@ import { ExtensionHost } from "@agent-qofeno/ext";
 import { buildBundle, type Bundle } from "@agent-qofeno/bundle";
 import { parseArgs, USAGE, outputFormatOf } from "./args.js";
 
-const VERSION = "0.1.0";
+const VERSION = (() => {
+  try {
+    const pkgPath = fileURLToPath(new URL("../../package.json", import.meta.url));
+    return String((JSON.parse(readFileSync(pkgPath, "utf8")) as { version?: string }).version ?? "0.0.0");
+  } catch {
+    return "0.0.0";
+  }
+})();
 
 function out(s: string): void {
   process.stdout.write(s + "\n");
