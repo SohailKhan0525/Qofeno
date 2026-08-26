@@ -1,0 +1,94 @@
+name: Android APK/AAB
+
+on:
+  workflow_dispatch:
+    inputs:
+      signed:
+        description: "Produce a SIGNED release (requires mobile-release environment secrets)"
+        type: boolean
+        default: false
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    environment: ${{ (github.event_name == 'workflow_dispatch' && inputs.signed) && 'mobile-release' || 'none' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - name: Android SDK probe (documented evidence gate)
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/ndk" 2>/dev/null || echo "::warning::NDK not preinstalled — cargo-ndk step will install what it needs"
+
+      - run: npm ci
+      - run: npm run -w @agent-qofeno/app build
+
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Rust android targets
+        run: rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+
+      - name: Install tauri CLI + cargo-ndk
+        run: |
+          npm i -g @tauri-apps/cli@2
+          cargo install cargo-ndk --locked
+
+      - name: Init android project (idempotent)
+        working-directory: apps/app
+        run: |
+          if [ ! -d src-tauri/gen/android ]; then
+            npx @tauri-apps/cli android init --ci || echo "::warning::android init needs interactive scaffold; using committed gen/ when present"
+          fi
+
+      - name: Decode signing keystore (signed runs only)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.signed }}
+        env:
+          QOFENO_KEYSTORE_BASE64: ${{ secrets.QOFENO_KEYSTORE_BASE64 }}
+          QOFENO_KEYSTORE_PASSWORD: ${{ secrets.QOFENO_KEYSTORE_PASSWORD }}
+          QOFENO_KEY_ALIAS: ${{ secrets.QOFENO_KEY_ALIAS }}
+          QOFENO_KEY_PASSWORD: ${{ secrets.QOFENO_KEY_PASSWORD }}
+        run: |
+          if [ -z "$QOFENO_KEYSTORE_BASE64" ]; then echo "::error::signed requested but secrets missing"; exit 1; fi
+          echo "$QOFENO_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/qofeno.jks"
+          echo "QOFENO_KEYSTORE_PATH=$RUNNER_TEMP/qofeno.jks" >> "$GITHUB_ENV"
+
+      - name: Build APK/AAB
+        id: build
+        working-directory: apps/app
+        env:
+          QOFENO_KEYSTORE_PATH: ${{ env.QOFENO_KEYSTORE_PATH }}
+          QOFENO_KEYSTORE_PASSWORD: ${{ secrets.QOFENO_KEYSTORE_PASSWORD }}
+          QOFENO_KEY_ALIAS: ${{ secrets.QOFENO_KEY_ALIAS }}
+          QOFENO_KEY_PASSWORD: ${{ secrets.QOFENO_KEY_PASSWORD }}
+        run: |
+          set -o pipefail
+          if [ -n "$QOFENO_KEYSTORE_PATH" ]; then
+            npx @tauri-apps/cli android build --target aarch64 --apk --aab 2>&1 | tee build.log
+          else
+            echo "::notice::building UNSIGNED artifacts (fork-safe)"
+            npx @tauri-apps/cli android build --target aarch64 --apk --aab \
+              $( [ -n "${{ secrets.QOFENO_KEYSTORE_PASSWORD }}" ] && echo "" || echo "--debug" ) 2>&1 | tee build.log || true
+          fi
+
+      - name: Verify signature (evidence for docs/compatibility.md)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.signed }}
+        run: |
+          APK=$(find . -name "*.apk" | head -1)
+          [ -n "$APK" ] && "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | tail -1)/apksigner" verify --verbose "$APK" | tee apk-signature-proof.txt
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qofeno-android
+          path: |
+            **/*.apk
+            **/*.aab
+            apk-signature-proof.txt
+          if-no-files-found: warn

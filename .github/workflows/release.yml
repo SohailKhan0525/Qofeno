@@ -55,12 +55,28 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
-      - run: npm run build
-      - name: Build desktop bundles (requires TAURI_SIGNING keys for updater)
-        continue-on-error: true # evidence-gated support; see docs/compatibility.md
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+      - run: npm run -w @agent-qofeno/app build
+      - name: Install tauri CLI
+        run: npm i -g @tauri-apps/cli@2
+      - name: Build desktop bundles (signed updater when TAURI_SIGNING_PRIVATE_KEY present)
+        working-directory: apps/desktop/src-tauri
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        shell: bash
         run: |
-          npx @tauri-apps/cli@2 build --config apps/desktop/src-tauri/tauri.conf.json || \
-          echo "::warning::desktop bundle skipped on this runner — see compatibility matrix"
+          if [ "$(uname)" = "Linux" ]; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev >/dev/null || true
+          fi
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            tauri build --config tauri.conf.json
+          else
+            echo "::warning::no updater signing key — building without updater signature"
+            TAURI_SIGNING_PRIVATE_KEY_PASSWORD="" tauri build --config tauri.conf.json --bundles deb,appimage,msi,dmg || \
+              echo "::warning::some bundle targets unavailable on this runner; artifacts uploaded where produced"
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:

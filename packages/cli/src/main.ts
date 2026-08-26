@@ -605,6 +605,49 @@ async function runManagementCommand(command: string, bundle: Bundle, args: Retur
         return 22;
       }
     }
+    case "setup": {
+      const st = new Stylizer({ theme: pickTheme(bundle.config.merged.theme), colorEnabled: bundle.capabilities.colorEnabled, unicode: bundle.capabilities.unicode });
+      const { LocalModelSetup } = await import("@agent-qofeno/providers");
+      const setup = new LocalModelSetup();
+      const result = await setup.run({
+        say: (step) => {
+          const line = step.text.replace(/^/gm, "  ");
+          out(step.kind === "error" ? st.error(line) : step.kind === "success" ? st.success(line) : step.kind === "warn" ? st.warning(line) : line);
+        },
+        confirm: async (title, detail) => {
+          out(st.warning(`? ${title}`));
+          if (detail) for (const l of detail.split("\n")) out(st.muted(`  ${l}`));
+          const rl = createInterface({ input: process.stdin, output: process.stdout });
+          const ans = await new Promise<string>((res) => rl.question(st.accent("  [y/N] "), (a) => { rl.close(); res(a); }));
+          return /^y(es)?$/i.test(ans.trim());
+        },
+      });
+      if ((result.status === "pulled" || result.status === "model-ready") && result.modelId) {
+        const userConfigPath = join(bundle.paths.config, "user.json");
+        const cfg = existsSync(userConfigPath) ? JSON.parse(await readFile(userConfigPath, "utf8")) : {};
+        cfg.model = result.modelId;
+        await writeFile(userConfigPath, JSON.stringify(cfg, null, 2), { mode: 0o600 });
+        out(st.success(`Default model saved: ${result.modelId}`));
+        return 0;
+      }
+      return result.status === "no-ollama" ? 4 : result.status === "failed" ? 20 : 0;
+    }
+    case "models": {
+      const { detectHardware, recommendModels } = await import("@agent-qofeno/runtime");
+      const hw = await detectHardware();
+      out(`hardware: ${hw.cpuCores} cores · ${hw.ramTotalGb}GB · ${hw.arch}${hw.gpu ? ` · ${hw.gpu.name}` : ""} → score ${hw.score} (${hw.tier})`);
+      const installed = await bundle.providers.allModels();
+      if (installed.length) {
+        out("installed:");
+        for (const m of installed) out(`  ${m.id}  ${m.destination}`);
+      } else {
+        out("installed: none");
+        out("recommended for this machine:");
+        for (const r of recommendModels(hw)) out(`  ${r.id.padEnd(22)} ~${r.diskGbApprox}GB  ${r.why}\n    ${r.hfUrl}`);
+        out("run `qofeno setup` for the guided installer.");
+      }
+      return 0;
+    }
     case "config": {
       if (sub === "path") {
         out(join(bundle.paths.config, "user.json"));

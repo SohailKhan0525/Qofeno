@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "identifier": "dev.qofeno.app",
   "build": {
-    "frontendDist": "../../apps/app/dist"
+    "frontendDist": "../../apps/app/dist",
+    "beforeBuildCommand": "npm run -w @agent-qofeno/app build"
   },
   "app": {
     "windows": [
@@ -19,16 +20,30 @@
     ],
     "security": {
       "csp": "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' http://127.0.0.1:7931 http://localhost:11434",
-      "capabilities": ["main-capability"]
+      "capabilities": [
+        "main-capability"
+      ]
     }
   },
   "bundle": {
     "active": true,
-    "targets": ["deb", "rpm", "appimage", "dmg", "msi", "nsis"],
-    "icon": [],
+    "targets": [
+      "deb",
+      "rpm",
+      "appimage",
+      "dmg",
+      "msi",
+      "nsis"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.png"
+    ],
     "publisher": "Qofeno",
     "copyright": "Apache-2.0",
-    "shortDescription": "Terminal-native AI agent — desktop app",
+    "shortDescription": "Terminal-native AI agent \u2014 desktop app",
     "longDescription": "Qofeno desktop: local-first AI conversations, projects, files, memory, knowledge, agents and workflows over the shared Qofeno engine."
   },
   "plugins": {
@@ -36,7 +51,9 @@
       "active": true,
       "dialog": true,
       "pubkey": "REPLACE_WITH_RELEASE_PUBKEY_AT_BUILD_TIME",
-      "endpoints": ["https://github.com/SohailKhan0525/Qofeno/releases/latest/download/latest.json"]
+      "endpoints": [
+        "https://github.com/SohailKhan0525/Qofeno/releases/latest/download/latest.json"
+      ]
     }
   }
 }

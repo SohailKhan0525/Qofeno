@@ -3,6 +3,7 @@ export * from "./openai.js";
 export * from "./ollama.js";
 export { AnthropicProvider } from "./anthropic.js";
 export * from "./registry.js";
+export * from "./setup.js";
 
 import { AnthropicProvider } from "./anthropic.js";
 import type { AiProvider } from "@agent-qofeno/core";
