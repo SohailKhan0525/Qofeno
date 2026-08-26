@@ -36,6 +36,8 @@ permissions list | grant <permission> [pattern] | deny <permission> [pattern] | 
 provider add <openai|ollama|anthropic> [baseUrl] | list | test
 memory list | add <text> | forget <id> | clear
 knowledge index <file> | search <query>
+repo index | search <query> | symbols <name>   repository intelligence (FTS5 + symbol heuristics)
+backup [path] | restore <archive>              sha256-manifested, validate-before-swap
 tools list
 agents run "<goal>"
 workflows validate <file.json>

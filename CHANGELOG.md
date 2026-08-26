@@ -2,6 +2,27 @@
 
 All notable changes are documented here. Format based on Keep a Changelog; versioning follows SemVer.
 
+## [0.1.4] — 2026-08-26
+
+### Fixed
+- Path containment now canonicalizes **nonexistent** paths under symlinked parents (macOS `/var`→`/private/var`, Windows junctions): legitimate writes pass, escapes stay blocked. Caught by the cross-platform CI matrix; regression-covered.
+- `engines` corrected to `>=22.5` (node:sqlite baseline); CI matrix aligned.
+- Service-worker globals declared for lint; Docker demoted to optional infrastructure only (open3 law).
+
+## [0.1.3] — 2026-08-26
+
+### Added
+- Repository intelligence: `qofeno repo index|search|symbols` — incremental FTS5 project indexing (ignore rules, binary sniffing, size caps) plus language-aware symbol search (TS/JS/Python/Rust/Go).
+- Verified backup/restore: `qofeno backup|restore` — per-entry SHA-256 manifests, validate-before-swap, fail-closed on tampering, never overwrites silently.
+- GitHub webhook freshness window (replay protection) in the internal protection bot.
+
+## [0.1.2] / [0.1.1] — 2026-08-26
+
+### Changed
+- open2/open3 architecture applied: exactly two products (CLI + App); GitHub automation repositioned as internal repository protection (`integrations/`).
+- Qofeno App (`apps/app`): complete graphical UI — chat, sessions, files, memory, knowledge, agents, workflows, settings & privacy — served by `qofeno serve`, packaged by Tauri desktop shells and the signed-APK Android pipeline.
+- Security workflows: CodeQL, secret-pattern scan (test-fixture aware), dependency review; protected environments; branch protection on main.
+
 ## [0.1.0] — 2026-08-25
 
 Initial public release of the unified Qofeno repository (CLI + App + GitHub Bot).
