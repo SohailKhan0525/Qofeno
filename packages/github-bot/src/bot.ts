@@ -56,7 +56,22 @@ export async function installationToken(cfg: BotConfig, installationId: number, 
 
 // ---- Webhook verification ----------------------------------------------------
 
-export function verifyWebhookSignature(secret: string, payload: string, header: string | undefined): boolean {
+/**
+ * Verify signature AND freshness (#webhook replay protection): deliveries
+ * older than `maxAgeMs` (default 10 min, GitHub's guidance) are rejected.
+ */
+export function verifyWebhookSignature(
+  secret: string,
+  payload: string,
+  header: string | undefined,
+  opts: { timestampHeader?: string | undefined; maxAgeMs?: number; nowMs?: number } = {},
+): boolean {
+  if (opts.timestampHeader !== undefined) {
+    const ts = Number(opts.timestampHeader);
+    if (!Number.isFinite(ts)) return false;
+    const age = Math.abs((opts.nowMs ?? Date.now()) - ts * 1000);
+    if (age > (opts.maxAgeMs ?? 600_000)) return false;
+  }
   if (!header?.startsWith("sha256=")) return false;
   const expected = createHmac("sha256", secret).update(payload).digest();
   const provided = (() => {

@@ -1,6 +1,6 @@
 {
   "name": "@agent-qofeno/qofeno-cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Qofeno CLI - cli",
   "license": "Apache-2.0",
   "type": "module",
@@ -38,11 +38,12 @@
     "@agent-qofeno/session": "0.1.0",
     "@agent-qofeno/knowledge": "0.1.0",
     "@agent-qofeno/ctx": "0.1.0",
-    "@agent-qofeno/tools": "0.1.0",
+    "@agent-qofeno/tools": "0.1.1",
     "@agent-qofeno/agents": "0.1.0",
     "@agent-qofeno/workflows": "0.1.0",
     "@agent-qofeno/ext": "0.1.0",
     "@agent-qofeno/repl": "0.1.0",
-    "@agent-qofeno/bundle": "0.1.0"
+    "@agent-qofeno/bundle": "0.1.0",
+    "@agent-qofeno/server": "0.1.2"
   }
 }

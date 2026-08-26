@@ -7,13 +7,22 @@ import { readFile, writeFile, readdir, stat, mkdir, rename as fsRename, unlink }
 import { existsSync, statSync } from "node:fs";
 import { join, relative, extname } from "node:path";
 import { execFile, execShell } from "@agent-qofeno/runtime";
-import { analyzeCommand } from "@agent-qofeno/security";
+import { analyzeCommand, FsPathGuard } from "@agent-qofeno/security";
 import { s } from "@agent-qofeno/core";
 import type { ToolDefinition, ToolContext } from "./registry.js";
 
 const IGNORED_DIRS = new Set(["node_modules", ".git", "dist", "build", ".next", "target", "__pycache__", ".venv", "venv", ".cache"]);
 
-// ---- filesystem -----------------------------------------------------------
+// ---- filesystem ------------------------------------------------------------
+
+/**
+ * Every filesystem tool resolves paths through FsPathGuard: lexical
+ * containment plus symlink/realpath escape checks (#0030 symlink security).
+ * The guard is created per-call so tests and shells can vary projectRoot.
+ */
+function resolveInProject(rawPath: string, ctx: ToolContext): string {
+  return new FsPathGuard().resolveInRoots(rawPath, [ctx.projectRoot]);
+}
 
 export const fsReadTool: ToolDefinition<{ path: string; maxBytes?: number }> = {
   name: "fs_read",
@@ -24,7 +33,7 @@ export const fsReadTool: ToolDefinition<{ path: string; maxBytes?: number }> = {
   risk: "low",
   timeoutMs: 10_000,
   async run(args, ctx) {
-    const p = join(ctx.projectRoot, args.path);
+    const p = resolveInProject(args.path, ctx);
     const bytes = await readFile(p);
     const capped = bytes.subarray(0, args.maxBytes ?? 200_000);
     return capped.toString("utf8") + (bytes.length > capped.length ? "\n…[truncated]" : "");
@@ -41,9 +50,8 @@ export const fsWriteTool: ToolDefinition<{ path: string; content: string; create
   timeoutMs: 15_000,
   localOnlyOutput: true,
   async run(args, ctx) {
-    // Refuse to clobber files modified after read in agent flows is handled by
-    // conflict detection at the agent layer; here we do an atomic temp+rename.
-    const p = join(ctx.projectRoot, args.path);
+    // Atomic temp+rename write; path containment enforced first.
+    const p = resolveInProject(args.path, ctx);
     if (args.createDirs) await mkdir(join(p, ".."), { recursive: true });
     const tmp = `${p}.qofeno-tmp-${Date.now()}`;
     await writeFile(tmp, args.content, { mode: 0o644 });
@@ -61,7 +69,7 @@ export const fsEditTool: ToolDefinition<{ path: string; oldText: string; newText
   risk: "high",
   timeoutMs: 15_000,
   async run(args, ctx) {
-    const p = join(ctx.projectRoot, args.path);
+    const p = resolveInProject(args.path, ctx);
     const current = await readFile(p, "utf8");
     const occurrences = current.split(args.oldText).length - 1;
     if (occurrences === 0) throw new Error("snippet not found — file unchanged");
@@ -83,7 +91,7 @@ export const fsListTool: ToolDefinition<{ path?: string }> = {
   risk: "low",
   timeoutMs: 15_000,
   async run(args, ctx) {
-    const root = join(ctx.projectRoot, args.path ?? ".");
+    const root = args.path ? resolveInProject(args.path, ctx) : ctx.projectRoot;
     const out: string[] = [];
     const walk = async (dir: string, depth: number): Promise<void> => {
       if (depth > 6 || out.length > 800) return;
@@ -128,7 +136,7 @@ export const fsGrepTool: ToolDefinition<{ pattern: string; path?: string; maxRes
   risk: "low",
   timeoutMs: 30_000,
   async run(args, ctx) {
-    const root = join(ctx.projectRoot, args.path ?? ".");
+    const root = args.path ? resolveInProject(args.path, ctx) : ctx.projectRoot;
     const re = new RegExp(args.pattern, "i");
     const max = args.maxResults ?? 80;
     const hits: string[] = [];

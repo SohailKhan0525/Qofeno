@@ -543,6 +543,59 @@ async function runManagementCommand(command: string, bundle: Bundle, args: Retur
         // Serve until the process is terminated.
       });
     }
+    case "repo": {
+      const { RepoIndexer } = await import("@agent-qofeno/bundle").then(() => import("@agent-qofeno/tools"));
+      const root = resolve(typeof args.flags["project-root"] === "string" ? String(args.flags["project-root"]) : process.cwd());
+      const indexer = new RepoIndexer(bundle.store, bundle.knowledge);
+      if (sub === "index") {
+        const p = await indexer.indexProject(root, (pr) => {
+          if (pr.files % 200 === 0) out(`indexed ${pr.indexed} files…`);
+        });
+        out(`repository index: ${p.indexed} indexed, ${p.skipped} skipped, ${(p.bytes / 1_048_576).toFixed(1)} MB scanned`);
+        return 0;
+      }
+      if (sub === "search" && args.positional[2]) {
+        const hits = await indexer.searchCode(root, args.positional.slice(2).join(" "));
+        out(hits.map((h) => `[${h.score}] ${h.title}\n    ${h.text.split("\n")[0]}`).join("\n") || "(no matches)");
+        return 0;
+      }
+      if (sub === "symbols" && args.positional[2]) {
+        const syms = await indexer.searchSymbols(root, args.positional[2]);
+        out(syms.map((s2) => `${s2.file}:${s2.line}  [${s2.kind}] ${s2.text}`).join("\n") || "(no matches)");
+        return 0;
+      }
+      errOut("usage: qofeno repo index | search <query> | symbols <name>");
+      return 2;
+    }
+    case "backup": {
+      const { createBackup } = await import("@agent-qofeno/tools");
+      const dest = args.positional[1] ?? join(bundle.paths.root, `backup-${Date.now()}.tar.gz`);
+      try {
+        const m = await createBackup(bundle.paths.root, dest);
+        out(`backup written: ${dest}`);
+        out(`entries: ${m.entries.length}; manifest: ${dest}.manifest.json`);
+        return 0;
+      } catch (e) {
+        errOut(String((e as Error).message));
+        return 22;
+      }
+    }
+    case "restore": {
+      const { restoreBackup } = await import("@agent-qofeno/tools");
+      const archive = args.positional[1];
+      if (!archive) {
+        errOut("usage: qofeno restore <archive.tar.gz>");
+        return 2;
+      }
+      try {
+        const r = await restoreBackup(resolve(archive), bundle.paths.root);
+        out(`restored ${r.restored} entries (${r.verified} verified, ${r.skipped} replaced)`);
+        return 0;
+      } catch (e) {
+        errOut(`restore failed safely: ${String((e as Error).message)}`);
+        return 22;
+      }
+    }
     case "config": {
       if (sub === "path") {
         out(join(bundle.paths.config, "user.json"));

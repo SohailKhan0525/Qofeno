@@ -17,6 +17,7 @@ GitHub automation in this repository is **internal infrastructure** (webhook-ver
 - **Local models are first-class.** Ollama works out of the box; hosted providers (OpenAI-compatible, Anthropic) are optional adapters.
 - **No silent anything.** No silent provider switching for protected data, no silent file destruction, no fabricated results, no fake progress.
 - **Zero runtime dependencies** across all packages — the supply chain is our own audited TypeScript plus Node's standard library.
+- **Docker is never required** — CLI, App and local models run natively; containers remain optional CI/self-hosting tooling.
 - **Fail closed, fail safely.** Non-interactive mode denies unconfigured risky operations; errors preserve user data and say what happened.
 
 ## Quick start

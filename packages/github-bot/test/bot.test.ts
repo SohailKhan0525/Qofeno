@@ -35,6 +35,17 @@ describe("github bot (#0112-#0114)", () => {
     assert.equal(verifyWebhookSignature(secret, body, "sha256=deadbeef"), false);
     assert.equal(verifyWebhookSignature("other", body, good), false);
     assert.equal(verifyWebhookSignature(secret, body + " ", good), false);
+    // Replay protection (#webhook replay): stale timestamps rejected.
+    const now = Math.floor(Date.now() / 1000);
+    const fresh = "sha256=" + createHmac("sha256", secret).update(body).digest("hex");
+    assert.equal(
+      verifyWebhookSignature(secret, body, fresh, { timestampHeader: String(now), nowMs: now * 1000 }),
+      true,
+    );
+    assert.equal(
+      verifyWebhookSignature(secret, body, fresh, { timestampHeader: String(now - 3600), nowMs: now * 1000 }),
+      false,
+    );
   });
 
   it("parses /qofeno commands only", () => {
