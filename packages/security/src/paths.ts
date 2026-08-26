@@ -19,10 +19,21 @@ export class FsPathGuard implements PathGuard {
     if (typeof rawPath !== "string" || rawPath.includes("\0")) {
       throw new QofenoError({ code: ErrorCode.VALIDATION_FAILED, message: "invalid path" });
     }
-    const rootAbs = roots.map((r) => resolve(r));
     const candidate = isAbsolute(rawPath) ? resolve(rawPath) : resolve(roots[0] ?? process.cwd(), rawPath);
-    this.assertWithinRoots(candidate, rootAbs);
+    this.assertWithinRoots(candidate, roots);
     return candidate;
+  }
+
+  /** Canonical root forms (realpath'd) so symlinked parents (e.g. macOS /var) match. */
+  private canonicalRoots(roots: string[]): string[] {
+    return roots.map((root) => {
+      const abs = resolve(root);
+      try {
+        return this.followSymlinks && existsSafe(abs) ? realpathSync(abs) : abs;
+      } catch {
+        return abs;
+      }
+    });
   }
 
   assertWithinRoots(absPath: string, roots: string[]): void {
@@ -46,10 +57,7 @@ export class FsPathGuard implements PathGuard {
     } catch {
       /* fall back to lexical check */
     }
-    const ok = roots.some((root) => {
-      const r = resolve(root);
-      return effective === r || effective.startsWith(r + sep);
-    });
+    const ok = this.canonicalRoots(roots).some((r) => effective === r || effective.startsWith(r + sep));
     if (!ok) {
       throw new QofenoError({
         code: ErrorCode.PERMISSION_DENIED,
