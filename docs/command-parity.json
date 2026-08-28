@@ -1,0 +1,305 @@
+{
+  "project": "qofeno",
+  "compatibilityTarget": "OpenCode",
+  "version": "0.2.0",
+  "summary": {
+    "totalCommands": 26,
+    "totalSlashCommands": 30,
+    "interactiveSupport": true,
+    "noninteractiveSupport": true,
+    "tuiSupport": true,
+    "securityEnforced": true
+  },
+  "commands": [
+    {
+      "name": "interactive",
+      "aliases": ["tui", "chat", "repl"],
+      "description": "Launch the interactive terminal TUI / REPL agent workspace",
+      "syntax": "qofeno [options]",
+      "interactiveSupport": true,
+      "noninteractiveSupport": false,
+      "slashEquivalent": "/new",
+      "exitCodes": [0, 1, 2, 130]
+    },
+    {
+      "name": "run",
+      "aliases": ["exec", "-p", "--print"],
+      "description": "Execute a one-shot prompt in non-interactive / headless mode",
+      "syntax": "qofeno run [prompt] [options] / qofeno -p <prompt>",
+      "interactiveSupport": false,
+      "noninteractiveSupport": true,
+      "exitCodes": [0, 1, 2, 3, 20, 21, 22, 124, 130]
+    },
+    {
+      "name": "serve",
+      "aliases": ["server"],
+      "description": "Start local HTTP, WebSocket, and JSON-RPC server for Web/Desktop App & extensions",
+      "syntax": "qofeno serve [--port 7931] [--token <token>]",
+      "interactiveSupport": false,
+      "noninteractiveSupport": true,
+      "exitCodes": [0, 1, 2, 130]
+    },
+    {
+      "name": "model",
+      "aliases": ["models"],
+      "description": "List, inspect, install, select, and manage AI models and hardware recommendations",
+      "syntax": "qofeno model [list|recommend|info|use|install|search|status] [name]",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "slashEquivalent": "/model",
+      "exitCodes": [0, 1, 2, 4, 20]
+    },
+    {
+      "name": "provider",
+      "aliases": ["providers"],
+      "description": "Configure and test local and cloud model providers",
+      "syntax": "qofeno provider [list|add|set|test|remove] [kind] [baseUrl]",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "slashEquivalent": "/provider",
+      "exitCodes": [0, 1, 2, 4, 21]
+    },
+    {
+      "name": "session",
+      "aliases": ["sessions"],
+      "description": "Inspect, list, resume, rename, delete, and export conversation sessions",
+      "syntax": "qofeno session [list|resume|export|rm|rename|clear|info] [id]",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "slashEquivalent": "/sessions",
+      "exitCodes": [0, 1, 2, 4, 22]
+    },
+    {
+      "name": "config",
+      "aliases": ["settings"],
+      "description": "View, update, reset, and inspect configuration and security policy",
+      "syntax": "qofeno config [get|set|list|reset|path|policy] [key] [value]",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "slashEquivalent": "/config",
+      "exitCodes": [0, 1, 2]
+    },
+    {
+      "name": "doctor",
+      "aliases": ["diagnostics", "check"],
+      "description": "Run environment diagnostics, system capabilities, runtime health, and policy validation",
+      "syntax": "qofeno doctor [--json]",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "slashEquivalent": "/doctor",
+      "exitCodes": [0, 1, 22]
+    },
+    {
+      "name": "init",
+      "aliases": ["scaffold"],
+      "description": "Initialize Qofeno configuration, project prompt instructions, and ignore rules",
+      "syntax": "qofeno init [--force]",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "slashEquivalent": "/init",
+      "exitCodes": [0, 1, 2]
+    },
+    {
+      "name": "auth",
+      "aliases": ["login", "logout"],
+      "description": "Securely manage API credentials and platform authentication",
+      "syntax": "qofeno auth [login|logout|status] [provider]",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "exitCodes": [0, 1, 2, 21]
+    },
+    {
+      "name": "share",
+      "aliases": [],
+      "description": "Export and securely package session summaries or transcripts",
+      "syntax": "qofeno share [session-id] [options]",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "slashEquivalent": "/share",
+      "exitCodes": [0, 1, 2, 4]
+    },
+    {
+      "name": "export",
+      "aliases": [],
+      "description": "Export conversation transcript to standard formats (JSON, Markdown, text)",
+      "syntax": "qofeno export [session-id] [dest] [--format md|json|html|text]",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "slashEquivalent": "/export",
+      "exitCodes": [0, 1, 2, 4]
+    },
+    {
+      "name": "diff",
+      "aliases": [],
+      "description": "Render high-clarity color terminal diffs with width budget and syntax highlighting",
+      "syntax": "qofeno diff <file1> <file2>",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "slashEquivalent": "/diff",
+      "exitCodes": [0, 1, 2, 4]
+    },
+    {
+      "name": "completion",
+      "aliases": ["completions"],
+      "description": "Generate shell completion scripts for Bash, Zsh, Fish, and PowerShell",
+      "syntax": "qofeno completion [bash|zsh|fish|powershell]",
+      "interactiveSupport": false,
+      "noninteractiveSupport": true,
+      "exitCodes": [0, 1, 2]
+    },
+    {
+      "name": "update",
+      "aliases": ["upgrade"],
+      "description": "Check remote registry for available updates and self-update instructions",
+      "syntax": "qofeno update [--check]",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "exitCodes": [0, 1, 2]
+    },
+    {
+      "name": "onboarding",
+      "aliases": ["welcome"],
+      "description": "Guided first-run configuration wizard and provider setup",
+      "syntax": "qofeno onboarding",
+      "interactiveSupport": true,
+      "noninteractiveSupport": false,
+      "exitCodes": [0, 1, 130]
+    },
+    {
+      "name": "setup",
+      "aliases": ["install-model"],
+      "description": "Guided local model discovery, hardware scoring, and installation wizard",
+      "syntax": "qofeno setup",
+      "interactiveSupport": true,
+      "noninteractiveSupport": false,
+      "slashEquivalent": "/setup",
+      "exitCodes": [0, 1, 4, 20, 130]
+    },
+    {
+      "name": "permissions",
+      "aliases": ["perms"],
+      "description": "Audit, grant, deny, and revoke deterministic security rules",
+      "syntax": "qofeno permissions [list|grant|deny|revoke|reset] [permission] [pattern]",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "slashEquivalent": "/permissions",
+      "exitCodes": [0, 1, 2]
+    },
+    {
+      "name": "memory",
+      "aliases": ["mem"],
+      "description": "Manage project and global persistent user memory notes",
+      "syntax": "qofeno memory [list|add|forget|clear] [content|id]",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "slashEquivalent": "/memory",
+      "exitCodes": [0, 1, 2]
+    },
+    {
+      "name": "knowledge",
+      "aliases": ["kb", "rag"],
+      "description": "Index project documents and perform semantic & keyword hybrid retrieval",
+      "syntax": "qofeno knowledge [index|search|list|clear] [file|query]",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "slashEquivalent": "/knowledge",
+      "exitCodes": [0, 1, 2, 22]
+    },
+    {
+      "name": "repo",
+      "aliases": ["codebase"],
+      "description": "Codebase symbol intelligence, file indexing, and fast code search",
+      "syntax": "qofeno repo [index|search|symbols|status] [query|symbol]",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "slashEquivalent": "/repo",
+      "exitCodes": [0, 1, 2]
+    },
+    {
+      "name": "tools",
+      "aliases": [],
+      "description": "List registered tools, schemas, and security risk classifications",
+      "syntax": "qofeno tools [list|info] [tool-name]",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "slashEquivalent": "/tools",
+      "exitCodes": [0, 1, 2]
+    },
+    {
+      "name": "agents",
+      "aliases": ["agent"],
+      "description": "Run autonomous or constrained multi-step engineering agent workflows",
+      "syntax": "qofeno agents run \"<goal>\" --model <provider:model>",
+      "interactiveSupport": false,
+      "noninteractiveSupport": true,
+      "slashEquivalent": "/plan",
+      "exitCodes": [0, 1, 2, 20]
+    },
+    {
+      "name": "workflows",
+      "aliases": ["workflow"],
+      "description": "Validate and run declarative engineering workflow pipelines",
+      "syntax": "qofeno workflows [validate|run|list] [file]",
+      "interactiveSupport": false,
+      "noninteractiveSupport": true,
+      "exitCodes": [0, 1, 2]
+    },
+    {
+      "name": "extensions",
+      "aliases": ["ext", "plugins"],
+      "description": "Install, inspect, enable, disable, and isolate local extensions",
+      "syntax": "qofeno extensions [list|install|enable|disable|rm] [id|dir]",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "exitCodes": [0, 1, 2]
+    },
+    {
+      "name": "backup",
+      "aliases": [],
+      "description": "Create SHA256 integrity-verified backup archive of Qofeno state",
+      "syntax": "qofeno backup [dest-path]",
+      "interactiveSupport": false,
+      "noninteractiveSupport": true,
+      "exitCodes": [0, 1, 22]
+    },
+    {
+      "name": "restore",
+      "aliases": [],
+      "description": "Restore Qofeno database and configuration from a verified backup archive",
+      "syntax": "qofeno restore <archive-path>",
+      "interactiveSupport": false,
+      "noninteractiveSupport": true,
+      "exitCodes": [0, 1, 22]
+    },
+    {
+      "name": "privacy",
+      "aliases": [],
+      "description": "Display local data mapping, storage paths, telemetry status, and network posture",
+      "syntax": "qofeno privacy",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "slashEquivalent": "/privacy",
+      "exitCodes": [0, 1]
+    },
+    {
+      "name": "version",
+      "aliases": ["-v", "--version"],
+      "description": "Print the current installed Qofeno version",
+      "syntax": "qofeno version / qofeno -v / qofeno --version",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "slashEquivalent": "/version",
+      "exitCodes": [0]
+    },
+    {
+      "name": "help",
+      "aliases": ["-h", "--help", "/?"],
+      "description": "Display comprehensive help, syntax, and command reference",
+      "syntax": "qofeno help [command]",
+      "interactiveSupport": true,
+      "noninteractiveSupport": true,
+      "slashEquivalent": "/help",
+      "exitCodes": [0]
+    }
+  ]
+}

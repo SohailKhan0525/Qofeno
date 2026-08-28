@@ -3,10 +3,17 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      auto_bump:
+        description: "Auto-bump version if tag/version already exists on npm"
+        type: boolean
+        default: true
 
 permissions:
   contents: write
   id-token: write # npm provenance / attestations
+  packages: write
 
 concurrency:
   group: release-${{ github.ref }}
@@ -18,30 +25,53 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
+        with:
+          node-version: 22
+          cache: npm
       - run: npm ci
       - run: npm run build
       - run: npm test
+      - run: npm run lint
 
-  npm-publish:
+  version-gate:
     needs: verify
     runs-on: ubuntu-latest
-    environment: npm-release # protected environment; fork PRs can never reach this
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+      bumped: ${{ steps.bump.outputs.bumped }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22, registry-url: https://registry.npmjs.org }
+        with:
+          node-version: 22
+          cache: npm
+      - id: bump
+        run: node scripts/check-and-bump-version.mjs
+
+  npm-publish:
+    needs: [verify, version-gate]
+    runs-on: ubuntu-latest
+    environment: npm-release # protected environment with NPM_TOKEN
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
       - run: npm ci
+      - name: Sync version
+        run: node scripts/check-and-bump-version.mjs
       - run: npm run build
-      - name: SBOM (CycloneDX)
+      - name: Generate SBOM (CycloneDX)
         run: node scripts/sbom.mjs > sbom.json
-      - name: Publish changed packages with provenance
+      - name: Publish all packages with provenance & verification
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: bash scripts/publish-all.sh
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: node scripts/publish-all.mjs
 
   desktop:
-    needs: verify
+    needs: [verify, version-gate]
     strategy:
       fail-fast: false
       matrix:
@@ -53,14 +83,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
+        with:
+          node-version: 22
+          cache: npm
       - run: npm ci
       - uses: dtolnay/rust-toolchain@stable
       - uses: swatinem/rust-cache@v2
       - run: npm run -w @agent-qofeno/app build
-      - name: Install tauri CLI
+      - name: Install Tauri CLI
         run: npm i -g @tauri-apps/cli@2
-      - name: Build desktop bundles (deb, appimage, rpm, msi, exe, dmg)
+      - name: Build desktop bundles
         working-directory: apps/desktop/src-tauri
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -73,9 +105,9 @@ jobs:
           if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
             tauri build --config tauri.conf.json
           else
-            echo "::warning::no updater signing key — building without updater signature"
+            echo "::warning::No updater signing key — building desktop artifacts"
             TAURI_SIGNING_PRIVATE_KEY_PASSWORD="" tauri build --config tauri.conf.json || \
-              echo "::warning::some bundle targets unavailable on this runner; artifacts uploaded where produced"
+              echo "::warning::Some bundle targets unavailable on runner; artifacts uploaded where produced"
           fi
       - uses: actions/upload-artifact@v4
         if: always()
@@ -92,25 +124,29 @@ jobs:
           retention-days: 14
 
   android:
-    needs: verify
+    needs: [verify, version-gate]
     runs-on: ubuntu-latest
-    environment: mobile-release # signing creds live here only
+    environment: mobile-release
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
+        with:
+          node-version: 22
+          cache: npm
       - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: 17 }
+        with:
+          distribution: temurin
+          java-version: 17
       - uses: dtolnay/rust-toolchain@stable
-      - name: Rust android target
+      - name: Rust Android target
         run: rustup target add aarch64-linux-android
-      - name: Install tauri CLI + cargo-ndk
+      - name: Install Tauri CLI + cargo-ndk
         run: |
           npm i -g @tauri-apps/cli@2
           cargo install cargo-ndk --locked || true
       - run: npm ci
       - run: npm run -w @agent-qofeno/app build
-      - name: Init android project
+      - name: Init Android project
         working-directory: apps/desktop/src-tauri
         run: |
           if [ ! -d gen/android ]; then
@@ -133,10 +169,10 @@ jobs:
           QOFENO_KEY_PASSWORD: ${{ secrets.QOFENO_KEY_PASSWORD }}
         run: |
           if [ -n "$QOFENO_KEYSTORE_PATH" ]; then
-            npx @tauri-apps/cli android build --target aarch64 --apk --aab || echo "::warning::signed android build failed"
+            npx @tauri-apps/cli android build --target aarch64 --apk --aab || echo "::warning::Signed Android build failed"
           else
-            echo "::notice::building unsigned debug artifact"
-            npx @tauri-apps/cli android build --target aarch64 --apk --debug || echo "::warning::unsigned android build failed"
+            echo "::notice::Building debug APK artifact"
+            npx @tauri-apps/cli android build --target aarch64 --apk --debug || echo "::warning::Android build failed"
           fi
       - uses: actions/upload-artifact@v4
         if: always()
@@ -149,27 +185,31 @@ jobs:
           retention-days: 14
 
   github-release:
-    needs: [verify, npm-publish, desktop, android]
+    needs: [verify, version-gate, npm-publish, desktop, android]
     if: always() && !cancelled() && needs.verify.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
+        with:
+          node-version: 22
+          cache: npm
       - run: npm ci
       - name: Prepare release directory and metadata
         run: |
           mkdir -p dist-release
-          git archive --format=tar.gz -o dist-release/qofeno-${GITHUB_REF_NAME}-source.tar.gz HEAD
+          git archive --format=tar.gz -o dist-release/qofeno-${{ needs.version-gate.outputs.version }}-source.tar.gz HEAD
           node scripts/sbom.mjs > dist-release/sbom.json
+          cp docs/command-parity.json dist-release/
+          cp docs/COMMAND_PARITY.md dist-release/
       - uses: actions/download-artifact@v4
         with:
           path: downloaded-artifacts
-      - name: Collect all OS release binaries (.deb, .appimage, .rpm, .msi, .exe, .dmg, .apk, .aab)
+      - name: Collect all OS release binaries (.deb, .AppImage, .rpm, .msi, .exe, .dmg, .apk, .aab)
         run: |
           find downloaded-artifacts -type f \( -name "*.deb" -o -name "*.AppImage" -o -name "*.appimage" -o -name "*.rpm" -o -name "*.msi" -o -name "*.exe" -o -name "*.dmg" -o -name "*.apk" -o -name "*.aab" \) -exec cp {} dist-release/ \; || true
           cd dist-release && sha256sum * > SHA256SUMS.txt
-          echo "Release Assets Prepared:"
+          echo "=== Prepared Release Assets ==="
           ls -la
       - uses: softprops/action-gh-release@v2
         with:

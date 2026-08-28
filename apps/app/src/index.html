@@ -3,115 +3,272 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Qofeno</title>
+<title>Qofeno — Open-Source AI Agent Platform</title>
+<meta name="description" content="Qofeno is an open-source terminal & desktop AI agent platform. Local-first, provider-neutral, deterministic permission security.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./app.css">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <div id="app" data-view="chat">
-  <aside id="sidebar" aria-label="Navigation">
-    <div class="brand"><span aria-hidden="true">◆</span> Qofeno</div>
-    <nav>
-      <button class="nav-btn" data-nav="chat" aria-current="page">Chat</button>
-      <button class="nav-btn" data-nav="sessions">Sessions</button>
-      <button class="nav-btn" data-nav="files">Files</button>
-      <button class="nav-btn" data-nav="memory">Memory</button>
-      <button class="nav-btn" data-nav="knowledge">Knowledge</button>
-      <button class="nav-btn" data-nav="agents">Agents</button>
-      <button class="nav-btn" data-nav="workflows">Workflows</button>
-      <button class="nav-btn" data-nav="settings">Settings &amp; Privacy</button>
+  <!-- SIDEBAR -->
+  <aside id="sidebar" aria-label="Main Navigation">
+    <div class="brand">
+      <div class="brand-badge" aria-hidden="true">◆</div>
+      <div class="brand-text">
+        <span class="brand-name">QOFENO</span>
+        <span class="brand-sub">AGENT PLATFORM</span>
+      </div>
+    </div>
+
+    <nav aria-label="Views">
+      <button class="nav-btn" data-nav="chat" aria-current="page" id="nav-chat">
+        <span class="nav-icon" aria-hidden="true">💬</span>
+        <span class="nav-label">Chat &amp; Agent</span>
+      </button>
+      <button class="nav-btn" data-nav="sessions" id="nav-sessions">
+        <span class="nav-icon" aria-hidden="true">📂</span>
+        <span class="nav-label">Sessions</span>
+      </button>
+      <button class="nav-btn" data-nav="files" id="nav-files">
+        <span class="nav-icon" aria-hidden="true">📄</span>
+        <span class="nav-label">Workspace Files</span>
+      </button>
+      <button class="nav-btn" data-nav="memory" id="nav-memory">
+        <span class="nav-icon" aria-hidden="true">🧠</span>
+        <span class="nav-label">Persistent Memory</span>
+      </button>
+      <button class="nav-btn" data-nav="knowledge" id="nav-knowledge">
+        <span class="nav-icon" aria-hidden="true">📚</span>
+        <span class="nav-label">Knowledge (RAG)</span>
+      </button>
+      <button class="nav-btn" data-nav="agents" id="nav-agents">
+        <span class="nav-icon" aria-hidden="true">⚡</span>
+        <span class="nav-label">Autonomous Agent</span>
+      </button>
+      <button class="nav-btn" data-nav="workflows" id="nav-workflows">
+        <span class="nav-icon" aria-hidden="true">🔄</span>
+        <span class="nav-label">Workflows</span>
+      </button>
+      <button class="nav-btn" data-nav="settings" id="nav-settings">
+        <span class="nav-icon" aria-hidden="true">⚙️</span>
+        <span class="nav-label">Settings &amp; Privacy</span>
+      </button>
     </nav>
-    <div id="conn-state" role="status" aria-live="polite"></div>
+
+    <div class="sidebar-footer">
+      <div id="conn-state" role="status" aria-live="polite">
+        <span class="conn-dot"></span>
+        <span class="conn-text">Connecting to core…</span>
+      </div>
+      <div class="version-badge">v0.2.0 · Local First</div>
+    </div>
   </aside>
 
+  <!-- MAIN VIEWPORT -->
   <main id="main" tabindex="-1">
-    <!-- CHAT -->
+    <!-- CHAT VIEW -->
     <section class="view" id="view-chat" aria-labelledby="h-chat">
-      <header class="view-head"><h1 id="h-chat">Chat</h1>
-        <label class="inline">Model
-          <select id="model-select"><option value="">auto (policy-routed)</option></select>
-        </label>
+      <header class="view-head">
+        <div class="head-title">
+          <h1 id="h-chat">Agent Workspace</h1>
+          <span class="status-pill active" id="active-mode-badge">Mode: Execute</span>
+        </div>
+        <div class="head-controls">
+          <label class="select-label" for="model-select">
+            <span class="muted-label">Active Model:</span>
+            <select id="model-select" aria-label="Select AI Model">
+              <option value="">auto (policy-routed)</option>
+            </select>
+          </label>
+        </div>
       </header>
-      <div id="chat-log" role="log" aria-live="polite"></div>
-      <form id="composer">
-        <textarea id="chat-input" rows="3" placeholder="Message qofeno… (Enter to send, Shift+Enter for newline)" aria-label="Message"></textarea>
-        <button type="submit" id="send-btn">Send</button>
+
+      <div id="chat-log" role="log" aria-live="polite" tabindex="0">
+        <div class="welcome-card">
+          <div class="welcome-icon">◆</div>
+          <h2>Welcome to Qofeno</h2>
+          <p>An open-source, local-first terminal &amp; desktop AI agent platform. Deterministic security guarantees, full tool support, and privacy by design.</p>
+          <div class="quick-chips">
+            <button class="chip" data-prompt="Summarize this repository and its architecture">“Summarize this repo”</button>
+            <button class="chip" data-prompt="Run the test suite and report results">“Run test suite”</button>
+            <button class="chip" data-prompt="Inspect local hardware and recommend models">“Hardware check”</button>
+            <button class="chip" data-prompt="/help">“/help”</button>
+          </div>
+        </div>
+      </div>
+
+      <form id="composer" aria-label="Chat composer">
+        <div class="composer-box">
+          <textarea id="chat-input" rows="2" placeholder="Message Qofeno or type /help… (Enter to send, Shift+Enter for newline)" aria-label="Chat input message"></textarea>
+          <div class="composer-toolbar">
+            <div class="hint-text">Slash commands: /help · /model · /clear · /cost · /privacy</div>
+            <button type="submit" id="send-btn" class="primary-btn">
+              <span>Send</span>
+              <span class="btn-arrow">→</span>
+            </button>
+          </div>
+        </div>
       </form>
     </section>
 
-    <!-- SESSIONS -->
+    <!-- SESSIONS VIEW -->
     <section class="view" id="view-sessions" hidden aria-labelledby="h-sessions">
-      <header class="view-head"><h1 id="h-sessions">Sessions</h1><button id="new-session">New session</button></header>
-      <ul id="session-list" class="card-list"></ul>
+      <header class="view-head">
+        <div class="head-title">
+          <h1 id="h-sessions">Saved Sessions</h1>
+        </div>
+        <button id="new-session" class="btn primary-btn">+ New Session</button>
+      </header>
+      <div class="view-content">
+        <ul id="session-list" class="card-list"></ul>
+      </div>
     </section>
 
-    <!-- FILES -->
+    <!-- FILES VIEW -->
     <section class="view" id="view-files" hidden aria-labelledby="h-files">
-      <header class="view-head"><h1 id="h-files">Project files</h1></header>
+      <header class="view-head">
+        <div class="head-title">
+          <h1 id="h-files">Workspace Files</h1>
+        </div>
+      </header>
       <div class="split">
-        <pre id="file-tree" tabindex="0" aria-label="File list"></pre>
-        <div><textarea id="file-editor" rows="22" aria-label="File contents"></textarea>
-          <div class="row"><button id="file-save">Save (atomic)</button><span id="file-status" role="status"></span></div>
+        <div class="file-sidebar">
+          <div class="split-head">Project Tree</div>
+          <pre id="file-tree" tabindex="0" aria-label="Project files list"></pre>
+        </div>
+        <div class="file-main">
+          <div class="split-head">File Editor (Atomic writes)</div>
+          <textarea id="file-editor" rows="22" placeholder="Select a file to inspect and edit…" aria-label="File contents editor"></textarea>
+          <div class="row file-actions">
+            <button id="file-save" class="btn primary-btn">Save Changes</button>
+            <span id="file-status" role="status"></span>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- MEMORY -->
+    <!-- MEMORY VIEW -->
     <section class="view" id="view-memory" hidden aria-labelledby="h-memory">
-      <header class="view-head"><h1 id="h-memory">Memory</h1><button id="mem-clear" class="danger">Clear all…</button></header>
-      <form id="mem-form" class="row"><input id="mem-input" placeholder="Add a memory…" aria-label="New memory"><button>Add</button></form>
-      <ul id="mem-list" class="card-list"></ul>
+      <header class="view-head">
+        <div class="head-title">
+          <h1 id="h-memory">Persistent Project Memory</h1>
+        </div>
+        <button id="mem-clear" class="btn danger-btn">Clear All Memories</button>
+      </header>
+      <div class="view-content">
+        <form id="mem-form" class="action-bar">
+          <input id="mem-input" placeholder="Record a persistent project note or constraint…" aria-label="New memory text">
+          <button class="btn primary-btn">Save Note</button>
+        </form>
+        <ul id="mem-list" class="card-list"></ul>
+      </div>
     </section>
 
-    <!-- KNOWLEDGE -->
+    <!-- KNOWLEDGE VIEW -->
     <section class="view" id="view-knowledge" hidden aria-labelledby="h-knowledge">
-      <header class="view-head"><h1 id="h-knowledge">Knowledge</h1></header>
-      <form id="kb-index-form" class="row">
-        <input id="kb-path" placeholder="project file to index (e.g. README.md)" aria-label="File path">
-        <button>Index</button>
-      </form>
-      <form id="kb-search-form" class="row">
-        <input id="kb-query" placeholder="Search knowledge…" aria-label="Search query">
-        <button>Search</button>
-      </form>
-      <ul id="kb-results" class="card-list" aria-live="polite"></ul>
+      <header class="view-head">
+        <div class="head-title">
+          <h1 id="h-knowledge">Knowledge &amp; RAG Collections</h1>
+        </div>
+      </header>
+      <div class="view-content">
+        <div class="grid-two">
+          <form id="kb-index-form" class="card form-card">
+            <h3>Index Document</h3>
+            <p class="muted">Extract chunks and build hybrid SQLite FTS search index.</p>
+            <input id="kb-path" placeholder="e.g. README.md, docs/architecture.md" aria-label="File path to index">
+            <button class="btn primary-btn">Index File</button>
+          </form>
+
+          <form id="kb-search-form" class="card form-card">
+            <h3>Query Knowledge</h3>
+            <p class="muted">Search indexed chunks with semantic and keyword ranking.</p>
+            <input id="kb-query" placeholder="Search concept or keyword…" aria-label="Knowledge search query">
+            <button class="btn secondary-btn">Search</button>
+          </form>
+        </div>
+        <ul id="kb-results" class="card-list" aria-live="polite"></ul>
+      </div>
     </section>
 
-    <!-- AGENTS -->
+    <!-- AGENTS VIEW -->
     <section class="view" id="view-agents" hidden aria-labelledby="h-agents">
-      <header class="view-head"><h1 id="h-agents">Agents</h1></header>
-      <form id="agent-form" class="row">
-        <input id="agent-goal" placeholder="Goal…" aria-label="Agent goal">
-        <input id="agent-model" placeholder="model: provider:model" aria-label="Model id">
-        <button>Run</button>
-      </form>
-      <pre id="agent-output" tabindex="0" aria-live="polite"></pre>
+      <header class="view-head">
+        <div class="head-title">
+          <h1 id="h-agents">Autonomous Agent Runner</h1>
+        </div>
+      </header>
+      <div class="view-content">
+        <form id="agent-form" class="card form-card">
+          <h3>Execute Multi-Step Goal</h3>
+          <p class="muted">Run the planner, tool executor, and verifier loop with hard safety bounds.</p>
+          <div class="field-group">
+            <input id="agent-goal" placeholder="Goal (e.g. Find all unused functions and generate a report)…" aria-label="Agent goal">
+            <input id="agent-model" placeholder="Model override (e.g. ollama:qwen2.5-coder:7b)" aria-label="Model ID">
+          </div>
+          <button class="btn primary-btn">Run Agent</button>
+        </form>
+        <div class="output-panel">
+          <div class="split-head">Execution Trace</div>
+          <pre id="agent-output" tabindex="0" aria-live="polite">(no active run)</pre>
+        </div>
+      </div>
     </section>
 
-    <!-- WORKFLOWS -->
+    <!-- WORKFLOWS VIEW -->
     <section class="view" id="view-workflows" hidden aria-labelledby="h-workflows">
-      <header class="view-head"><h1 id="h-workflows">Workflows</h1></header>
-      <p class="muted">Validate portable workflow definitions (qofeno.workflow/1).</p>
-      <textarea id="wf-json" rows="14" aria-label="Workflow JSON"></textarea>
-      <div class="row"><button id="wf-validate">Validate</button><span id="wf-status" role="status"></span></div>
+      <header class="view-head">
+        <div class="head-title">
+          <h1 id="h-workflows">Declarative Workflows</h1>
+        </div>
+      </header>
+      <div class="view-content">
+        <div class="card form-card">
+          <h3>Workflow Definition (qofeno.workflow/1)</h3>
+          <p class="muted">Validate JSON pipeline definitions for automated engineering tasks.</p>
+          <textarea id="wf-json" rows="12" placeholder='{\n  "version": "qofeno.workflow/1",\n  "name": "lint-and-test",\n  "steps": []\n}' aria-label="Workflow JSON"></textarea>
+          <div class="row">
+            <button id="wf-validate" class="btn primary-btn">Validate Pipeline</button>
+            <span id="wf-status" role="status"></span>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- SETTINGS -->
+    <!-- SETTINGS VIEW -->
     <section class="view" id="view-settings" hidden aria-labelledby="h-settings">
-      <header class="view-head"><h1 id="h-settings">Settings &amp; Privacy</h1></header>
-      <div id="privacy-report" class="card" aria-live="polite">Loading…</div>
-      <h2>Danger zone</h2>
-      <button id="wipe" class="danger">Delete ALL local data…</button>
+      <header class="view-head">
+        <div class="head-title">
+          <h1 id="h-settings">Settings, Security &amp; Privacy</h1>
+        </div>
+      </header>
+      <div class="view-content">
+        <div id="privacy-report" class="card privacy-card" aria-live="polite">Loading security posture…</div>
+        <div class="card danger-card">
+          <h3>Danger Zone</h3>
+          <p class="muted">Permanently wipe all local sessions, memories, SQLite databases, and cached indexes.</p>
+          <button id="wipe" class="btn danger-btn">Delete All Local Data</button>
+        </div>
+      </div>
     </section>
   </main>
 </div>
-<dialog id="confirm-dialog">
-  <form method="dialog">
-    <h2 id="confirm-title">Confirm</h2>
+
+<!-- CONFIRM DIALOG -->
+<dialog id="confirm-dialog" aria-labelledby="confirm-title">
+  <form method="dialog" class="dialog-box">
+    <h2 id="confirm-title">Security Confirmation</h2>
     <p id="confirm-detail"></p>
-    <menu><button value="cancel">Cancel</button><button value="ok" id="confirm-ok">Confirm</button></menu>
+    <menu class="dialog-menu">
+      <button value="cancel" class="btn secondary-btn">Cancel</button>
+      <button value="ok" id="confirm-ok" class="btn primary-btn">Authorize</button>
+    </menu>
   </form>
 </dialog>
+
 <script>
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   navigator.serviceWorker.register("./sw.js").catch(() => {});

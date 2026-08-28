@@ -4,7 +4,7 @@
  * real; nothing is downloaded without explicit user approval (#LOCAL MODELS).
  */
 import { execFile } from "@agent-qofeno/runtime";
-import { OllamaProvider } from "@agent-qofeno/providers";
+import { OllamaProvider } from "./ollama.js";
 import { detectHardware, recommendModels, type HardwareReport, type ModelRecommendation } from "@agent-qofeno/runtime";
 
 export interface SetupStep {

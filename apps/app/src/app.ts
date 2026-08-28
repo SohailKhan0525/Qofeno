@@ -51,17 +51,35 @@ const viewLoaders: Record<string, () => void> = {};
 
 // ---- chat -------------------------------------------------------------------
 function addMsg(who: string, text: string, cls = ""): void {
+  const welcome = $("#chat-log .welcome-card");
+  if (welcome) welcome.remove();
+
   const d = document.createElement("div");
-  d.className = `msg ${cls}`;
+  d.className = `msg ${who === "you" ? "user" : ""} ${cls}`;
   const w = document.createElement("div");
   w.className = "who";
   w.textContent = who;
+  const b = document.createElement("div");
+  b.className = "bubble";
   const p = document.createElement("pre");
   p.textContent = text;
-  d.append(w, p);
+  b.append(p);
+  d.append(w, b);
   $("#chat-log").append(d);
   $("#chat-log").scrollTop = $("#chat-log").scrollHeight;
 }
+
+// Quick action chips
+$$(".chip").forEach((c) =>
+  c.addEventListener("click", () => {
+    const p = c.dataset.prompt;
+    if (p) {
+      const input = $("#chat-input") as HTMLTextAreaElement;
+      input.value = p;
+      $("#composer").dispatchEvent(new Event("submit"));
+    }
+  })
+);
 
 $("#composer").addEventListener("submit", async (e) => {
   e.preventDefault();

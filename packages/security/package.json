@@ -1,6 +1,6 @@
 {
   "name": "@agent-qofeno/security",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Qofeno CLI - security",
   "license": "Apache-2.0",
   "type": "module",
@@ -13,7 +13,7 @@
     }
   },
   "dependencies": {
-    "@agent-qofeno/core": "0.2.0"
+    "@agent-qofeno/core": "^0.2.1"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

@@ -1,6 +1,6 @@
 {
   "name": "@agent-qofeno/agents",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Qofeno CLI - agents",
   "license": "Apache-2.0",
   "type": "module",
@@ -17,8 +17,8 @@
     "test": "node --test dist/test/"
   },
   "dependencies": {
-    "@agent-qofeno/core": "0.2.0",
-    "@agent-qofeno/tools": "0.2.0",
-    "@agent-qofeno/ctx": "0.2.0"
+    "@agent-qofeno/core": "^0.2.1",
+    "@agent-qofeno/tools": "^0.2.1",
+    "@agent-qofeno/ctx": "^0.2.1"
   }
 }

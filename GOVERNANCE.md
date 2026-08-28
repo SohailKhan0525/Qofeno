@@ -13,7 +13,7 @@ Current maintainers:
 | core/security/storage | @SohailKhan0525 |
 | providers/agents/workflows | @SohailKhan0525 |
 | term/input/repl/cli UX | @SohailKhan0525 |
-| server/app + github-bot | @SohailKhan0525 |
+| server/app + CI/CD | @SohailKhan0525 |
 
 (The table is intentionally small at 0.1; it grows by invitation after sustained, high-quality contribution. No single-person knowledge silos: every area requires docs + tests sufficient for handover.)
 

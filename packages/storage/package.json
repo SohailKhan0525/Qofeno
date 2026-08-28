@@ -1,6 +1,6 @@
 {
   "name": "@agent-qofeno/storage",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Qofeno CLI - storage",
   "license": "Apache-2.0",
   "type": "module",
@@ -17,6 +17,6 @@
     "test": "node --test dist/test/"
   },
   "dependencies": {
-    "@agent-qofeno/core": "0.2.0"
+    "@agent-qofeno/core": "^0.2.1"
   }
 }

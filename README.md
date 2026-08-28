@@ -80,10 +80,9 @@ apps/
   app/          the Qofeno App UI (shared by desktop & mobile shells)
   desktop/      Tauri v2 shell (Win/macOS/Linux installers)
   mobile-android/  signed APK/AAB pipeline
-integrations/   internal repo-protection bot (not a product)
 ```
 
-Compatibility claims are evidence-gated: see [docs/compatibility.md](docs/compatibility.md).
+Compatibility claims are evidence-gated: see [docs/compatibility.md](docs/compatibility.md) and [docs/COMMAND_PARITY.md](docs/COMMAND_PARITY.md).
 
 ## Building from source
 
@@ -99,10 +98,11 @@ Requires Node ≥ 20.12 (built-in SQLite). Works on Linux, macOS, Windows/WSL, B
 
 ## Documentation
 
+- [OpenCode Command Parity Matrix](docs/COMMAND_PARITY.md) · [CLI reference](docs/cli-reference.md)
 - [Architecture](docs/architecture.md) · [Security model](docs/security.md) · [Privacy model](docs/privacy.md)
-- [CLI reference](docs/cli-reference.md) · [Providers & models](docs/providers.md) · [Permissions](docs/permissions.md)
-- [Self-hosting the App](docs/self-hosting.md) · [GitHub Bot setup](docs/github-bot.md)
-- [Threat model summary](docs/security.md#threat-model) · [Governance](GOVERNANCE.md) · [Contributing](CONTRIBUTING.md)
+- [Providers & models](docs/providers.md) · [Release & Publishing](docs/release.md)
+- [Self-hosting the App](docs/self-hosting.md) · [Threat model summary](docs/security.md#threat-model)
+- [Governance](GOVERNANCE.md) · [Contributing](CONTRIBUTING.md)
 
 ## Status
 

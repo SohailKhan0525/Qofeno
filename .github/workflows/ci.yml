@@ -26,12 +26,17 @@ jobs:
       - run: npm run build
       - run: npm test
       - run: npm run lint
-      - name: CLI smoke (real binary)
+      - name: CLI Smoke Test (Real Binary & Parity Matrix)
         shell: bash
         run: |
           node packages/cli/dist/src/main.js version
-          node packages/cli/dist/src/main.js doctor
+          node packages/cli/dist/src/main.js doctor --json
           node packages/cli/dist/src/main.js tools list
+          node packages/cli/dist/src/main.js model recommend
+          node packages/cli/dist/src/main.js completion bash
+          node packages/cli/dist/src/main.js completion zsh
+          node packages/cli/dist/src/main.js completion fish
+          node packages/cli/dist/src/main.js completion powershell
 
   security:
     runs-on: ubuntu-latest
@@ -42,23 +47,21 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: dependency audit (non-blocking advisory gate)
+      - name: Dependency audit
         run: npm audit --omit=dev || true
-      - name: license sanity — zero runtime deps per package
+      - name: Supply-chain runtime zero-foreign-deps verification
         run: |
           node -e '
-            const fs=require("fs");
+            const fs = require("fs");
             for (const dir of fs.readdirSync("packages")) {
-              const pkg=JSON.parse(fs.readFileSync(`packages/${dir}/package.json`,"utf8"));
-              const deps=Object.keys(pkg.dependencies||{});
-              const foreign=deps.filter(d=>!d.startsWith("@agent-qofeno/"));
-              if (foreign.length) { console.error(`${pkg.name} has foreign runtime deps: ${foreign}`); process.exit(1); }
+              const p = `packages/${dir}/package.json`;
+              if (!fs.existsSync(p)) continue;
+              const pkg = JSON.parse(fs.readFileSync(p, "utf8"));
+              const deps = Object.keys(pkg.dependencies || {});
+              const foreign = deps.filter(d => !d.startsWith("@agent-qofeno/"));
+              if (foreign.length) {
+                console.error(`${pkg.name} has foreign runtime deps: ${foreign}`);
+                process.exit(1);
+              }
             }
-            console.log("supply-chain check ok: internal-only runtime dependencies");'
-
-  docker:
-    if: github.event_name == 'workflow_dispatch' # optional infrastructure only
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: docker build -t qofeno:ci .
+            console.log("✔ Supply-chain check passed: zero foreign runtime dependencies.");'

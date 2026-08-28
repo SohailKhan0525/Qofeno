@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Publish only packages whose version is not yet on the registry.
 set -uo pipefail
-for p in core security storage providers runtime term input config session knowledge ctx tools agents workflows ext repl server github-bot bundle cli; do
+for p in core security storage providers runtime term input config session knowledge ctx tools agents workflows ext repl server bundle cli; do
   dir="packages/$p"
   [ -f "$dir/package.json" ] || continue
   name=$(node -p "require('./$dir/package.json').name")
