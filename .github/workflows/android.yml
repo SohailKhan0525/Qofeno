@@ -67,17 +67,6 @@ jobs:
           QOFENO_KEY_ALIAS: ${{ secrets.QOFENO_KEY_ALIAS }}
           QOFENO_KEY_PASSWORD: ${{ secrets.QOFENO_KEY_PASSWORD }}
         run: |
-          # Build the web app FIRST (from repo root) to ensure web assets exist
-          cd ../../../apps/app
-          npm run build
-          # Verify web assets exist
-          if [ ! -d "dist" ]; then
-            echo "::error::Web assets not built - dist directory missing"
-            exit 1
-          fi
-          # Return to Tauri directory
-          cd ../../desktop/src-tauri
-
           # Build the Android app
           if [ -n "$QOFENO_KEYSTORE_PATH" ]; then
             npx @tauri-apps/cli android build --target aarch64 --apk --aab 2>&1 | tee build.log

@@ -150,6 +150,7 @@ jobs:
 
   github-release:
     needs: [verify, npm-publish, desktop, android]
+    if: always() && !cancelled() && needs.verify.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
