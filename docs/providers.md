@@ -1,19 +1,26 @@
 # Providers & Models
 
-Qofeno is provider-neutral. Adapters implement a small interface (models, chat streaming, optional embeddings, health); routing picks a target per request under privacy rules.
+Qofeno is provider-neutral. Adapters implement a unified interface (`listModels`, `chat` streaming, optional `embed`, `health`); routing picks a target per request under strict privacy policies.
 
 ## Adding providers
 
 ```bash
-qofeno provider add ollama http://localhost:11434     # local, no key needed
-qofeno provider add openai                            # prompts for key → OS credential store
-qofeno provider add anthropic                         # uses ANTHROPIC_API_KEY if present
-qofeno provider test                                  # discovery + health check
+qofeno onboarding                                     # guided setup wizard for local & cloud models
+qofeno setup                                          # hardware-scored local model pull wizard
+qofeno provider add ollama http://localhost:11434     # local inference, no key needed
+qofeno provider add openrouter                        # OpenRouter unified multi-model API
+qofeno provider add gemini                            # Google Gemini (Gemini 2.0 Flash / Pro)
+qofeno provider add anthropic                         # Anthropic Claude (Claude 3.5 Sonnet / Haiku / Opus)
+qofeno provider add openai                            # OpenAI (GPT-4o, GPT-4o-mini)
+qofeno provider add custom http://localhost:8000/v1   # Local/Self-hosted OpenAI-compatible server (vLLM, llama.cpp, LM Studio)
+qofeno provider test                                  # discovery + live health check
 ```
 
-Keys are stored in your OS credential store when available, else the AES-256-GCM vault. They never appear in logs, context or output.
+Keys are stored in your OS credential store when available, else the AES-256-GCM vault. They never appear in logs, context, or output.
 
-Any OpenAI-compatible server works with `add openai <baseUrl>`: vLLM, LM Studio, llama.cpp's server, Groq, Together, OpenRouter, Gemini's compatibility endpoint.
+## Hardware-Aware Model Discovery & Recommendations
+
+Run `qofeno models` to detect your machine's CPU cores, RAM, GPU/VRAM, and compute score. Qofeno matches your hardware against verified Hugging Face models (e.g. SmolLM2, Qwen2.5-Coder, Llama 3.2) and estimates memory footprint before downloading.
 
 ## Routing rules (deterministic)
 
@@ -26,7 +33,3 @@ Any OpenAI-compatible server works with `add openai <baseUrl>`: vLLM, LM Studio,
 4. If the preferred model is unavailable and content is sensitive/local-only, routing **refuses** rather than silently switching providers.
 
 Set `security.localOnly: true` to forbid external destinations entirely.
-
-## Model downloads
-
-Qofeno never pulls models on its own. Use your inference engine's tooling (`ollama pull …`) so size, license and disk choices remain yours.

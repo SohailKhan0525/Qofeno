@@ -86,6 +86,28 @@ describe("ollama adapter shape", () => {
   });
 });
 
+describe("openrouter & gemini provider adapters", () => {
+  it("creates openrouter provider and lists default models on offline fallback", async () => {
+    const { OpenRouterProvider, createOpenRouterProvider } = await import("../src/index.js");
+    const p = createOpenRouterProvider({ id: "openrouter-test", apiKey: "test-key" });
+    assert.equal(p.descriptor.id, "openrouter-test");
+    assert.equal(p.descriptor.kind, "openrouter");
+    const models = await p.listModels();
+    assert.ok(models.length > 0);
+    assert.ok(models.some((m) => m.id.includes("claude") || m.id.includes("gpt") || m.id.includes("qwen")));
+  });
+
+  it("creates gemini provider and lists models on offline fallback", async () => {
+    const { GeminiProvider, createGeminiProvider } = await import("../src/index.js");
+    const p = createGeminiProvider({ id: "gemini-test", apiKey: "test-key" });
+    assert.equal(p.descriptor.id, "gemini-test");
+    assert.equal(p.descriptor.kind, "gemini");
+    const models = await p.listModels();
+    assert.ok(models.length > 0);
+    assert.ok(models.some((m) => m.id.includes("gemini-2.0-flash")));
+  });
+});
+
 describe("routing policy", () => {
   it("refuses to silently switch providers for sensitive data when the preferred model is down", async () => {
     const registry = new ProviderRegistry();

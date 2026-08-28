@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "identifier": "dev.qofeno.app",
   "build": {
-    "frontendDist": "../../apps/app/dist",
+    "frontendDist": "../../app/dist",
     "beforeBuildCommand": "npm run -w @agent-qofeno/app build"
   },
   "app": {

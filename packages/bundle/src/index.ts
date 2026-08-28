@@ -4,7 +4,7 @@
  */
 import { join } from "node:path";
 import { SqliteStorage } from "@agent-qofeno/storage";
-import type { AiProvider, Storage } from "@agent-qofeno/core";
+import type { AiProvider } from "@agent-qofeno/core";
 import { qofenoPaths, ensurePaths, detectCapabilities } from "@agent-qofeno/runtime";
 import { detectSecretStore } from "@agent-qofeno/security";
 import { ConfigLoader, WorkspaceTrust } from "@agent-qofeno/config";
@@ -12,7 +12,14 @@ import { SessionEngine } from "@agent-qofeno/session";
 import { KnowledgeEngine, MemoryEngine } from "@agent-qofeno/knowledge";
 import { ContextManager } from "@agent-qofeno/ctx";
 import { ToolRegistry, registerBuiltins } from "@agent-qofeno/tools";
-import { ProviderRegistry, OllamaProvider, OpenAiCompatibleProvider, createAnthropicProvider } from "@agent-qofeno/providers";
+import {
+  ProviderRegistry,
+  OllamaProvider,
+  OpenAiCompatibleProvider,
+  OpenRouterProvider,
+  GeminiProvider,
+  createAnthropicProvider,
+} from "@agent-qofeno/providers";
 import type { LoadedConfig } from "@agent-qofeno/config";
 
 export interface Bundle {
@@ -63,17 +70,41 @@ export async function buildBundle(opts: BundleOptions = {}): Promise<Bundle> {
       if (p.kind === "ollama") {
         provider = new OllamaProvider({ id: p.id, baseUrl: p.baseUrl });
       } else if (p.kind === "openai") {
-        const key = p.credentialRef ? ((await secrets.get(p.credentialRef)) ?? undefined) : undefined;
+        const key = p.credentialRef ? ((await secrets.get(p.credentialRef)) ?? undefined) : process.env.OPENAI_API_KEY;
         provider = new OpenAiCompatibleProvider({ id: p.id, baseUrl: p.baseUrl ?? "https://api.openai.com/v1", apiKey: key });
+      } else if (p.kind === "openrouter") {
+        const key = p.credentialRef ? ((await secrets.get(p.credentialRef)) ?? undefined) : process.env.OPENROUTER_API_KEY;
+        provider = new OpenRouterProvider({ id: p.id, baseUrl: p.baseUrl, apiKey: key });
+      } else if (p.kind === "gemini") {
+        const key = p.credentialRef ? ((await secrets.get(p.credentialRef)) ?? undefined) : process.env.GEMINI_API_KEY;
+        provider = new GeminiProvider({ id: p.id, baseUrl: p.baseUrl, apiKey: key });
       } else if (p.kind === "anthropic") {
         const key = p.credentialRef ? await secrets.get(p.credentialRef) : process.env.ANTHROPIC_API_KEY;
         if (key) provider = createAnthropicProvider({ id: p.id, apiKey: key });
+      } else if (p.kind === "openai-compatible" || p.kind === "custom") {
+        const key = p.credentialRef ? ((await secrets.get(p.credentialRef)) ?? undefined) : undefined;
+        provider = new OpenAiCompatibleProvider({ id: p.id, baseUrl: p.baseUrl ?? "http://localhost:8000/v1", apiKey: key });
       }
       if (provider) providers.register(provider);
     } catch {
       /* a broken provider config must not prevent startup (#0294) */
     }
   }
+
+  // Auto-detect environment API keys if provider is not explicitly listed in config
+  if (!providers.get("openrouter") && process.env.OPENROUTER_API_KEY) {
+    providers.register(new OpenRouterProvider({ id: "openrouter", apiKey: process.env.OPENROUTER_API_KEY }));
+  }
+  if (!providers.get("gemini") && process.env.GEMINI_API_KEY) {
+    providers.register(new GeminiProvider({ id: "gemini", apiKey: process.env.GEMINI_API_KEY }));
+  }
+  if (!providers.get("anthropic") && process.env.ANTHROPIC_API_KEY) {
+    providers.register(createAnthropicProvider({ id: "anthropic", apiKey: process.env.ANTHROPIC_API_KEY }));
+  }
+  if (!providers.get("openai") && process.env.OPENAI_API_KEY) {
+    providers.register(new OpenAiCompatibleProvider({ id: "openai", baseUrl: "https://api.openai.com/v1", apiKey: process.env.OPENAI_API_KEY }));
+  }
+
   // Default local provider is always attempted so local AI is first-class.
   if (!providers.get("ollama")) {
     providers.register(new OllamaProvider({ id: "ollama", baseUrl: "http://localhost:11434" }));

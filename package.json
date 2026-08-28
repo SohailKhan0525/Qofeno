@@ -18,7 +18,7 @@
     "test": "tsc -b tsconfig.all.json && node --test packages/*/dist/test/*.test.js",
     "lint": "eslint .",
     "format:check": "prettier --check .",
-    "qofeno": "node packages/cli/dist/main.js"
+    "qofeno": "node packages/cli/dist/src/main.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.10.0",

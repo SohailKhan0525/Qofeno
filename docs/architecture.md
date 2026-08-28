@@ -1,10 +1,17 @@
 # Architecture
 
-Qofeno is a strict-layered TypeScript monorepo with zero runtime dependencies. Dependencies point downward only; the domain layer knows no vendor.
+Qofeno is a strict-layered TypeScript monorepo with zero foreign runtime dependencies.
+
+## Two User-Facing Products
+
+1. **Qofeno Terminal CLI** — complete interactive terminal coding agent, headless execution, local hardware detection, model management, and provider routing.
+2. **Qofeno App** — local-first graphical application available across Web, Desktop (Linux, macOS, Windows via Tauri), and Mobile (Android signed APK/AAB).
+
+GitHub Actions workflows and security verification form **internal project infrastructure**.
 
 ```
 ┌────────────────────────────────────────────────────────────┐
-│ products: cli · repl · server(App) · github-bot(Bot)       │
+│ user products: Qofeno Terminal CLI  ·  Qofeno App          │
 ├────────────────────────────────────────────────────────────┤
 │ application engines: session · memory/knowledge · ctx      │
 │ agents · workflows · ext(plugins/MCP)                      │
@@ -45,11 +52,11 @@ persist assistant/tool messages (branch-aware tree)
 
 ## Storage
 
-Single SQLite database (`~/.qofeno/qofeno.db`, WAL) via node:sqlite: versioned migrations, FTS5 mirrors for messages/chunks, content-addressed blobs under `blobs/`. All access goes through the `Storage` interface — swapping engines means implementing that interface, nothing else.
+Single SQLite database (`~/.qofeno/qofeno.db`, WAL) via `node:sqlite`: versioned migrations, FTS5 mirrors for messages/chunks, content-addressed blobs under `blobs/`. All access goes through the `Storage` interface — swapping engines means implementing that interface, nothing else.
 
 ## Why these choices
 
-- **node:sqlite over native deps** — portability (Termux/BSD/CI), supply-chain surface of zero.
-- **Interfaces in core, implementations outside** — any provider/database/renderer is replaceable; the spec's no-lock-in requirement is structural, not aspirational.
+- **node:sqlite over native deps** — portability (Termux/BSD/CI), supply-chain surface of zero foreign runtime dependencies.
+- **Interfaces in core, implementations outside** — any provider/database/renderer is replaceable; no vendor lock-in.
 - **One gate for privileged ops** — auditable, testable, impossible to bypass from prompt text.
 - **Token-budgeted context with explicit dropping order** — long sessions degrade predictably; system instructions are never silently discarded.

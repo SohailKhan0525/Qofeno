@@ -26,6 +26,7 @@ import { WorkflowEngine } from "@agent-qofeno/workflows";
 import { ExtensionHost } from "@agent-qofeno/ext";
 import { buildBundle, type Bundle } from "@agent-qofeno/bundle";
 import { parseArgs, USAGE, outputFormatOf } from "./args.js";
+import { runOnboarding } from "./onboarding.js";
 
 const VERSION = (() => {
   try {
@@ -108,7 +109,7 @@ async function runInteractive(bundle: Bundle, args: ReturnType<typeof parseArgs>
 
   const models = await bundle.providers.allModels();
   if (models.length === 0) {
-    out(st.warning("No AI providers reachable yet. Start Ollama (`ollama serve`) or run `qofeno provider add openai`."));
+    out(st.warning("No AI providers reachable yet. Run `qofeno onboarding` to configure, or start Ollama (`ollama serve`)."));
   }
 
   const repl = new QofenoRepl({
@@ -389,24 +390,32 @@ async function runManagementCommand(command: string, bundle: Bundle, args: Retur
     case "provider": {
       if (sub === "add") {
         const kind = args.positional[2];
+        if (!kind) {
+          errOut("usage: qofeno provider add <openai|openrouter|gemini|anthropic|ollama|custom> [baseUrl]");
+          return 2;
+        }
         const baseUrl = args.positional[3];
         const providersCfg = bundle.config.merged.providers ?? [];
         const id = `${kind}-${providersCfg.length + 1}`;
-        providersCfg.push({ id, kind: kind as "openai" | "ollama" | "anthropic", baseUrl });
+        const newProvider = { id, kind: kind as "openai" | "ollama" | "anthropic", baseUrl, credentialRef: undefined as string | undefined };
+        providersCfg.push(newProvider);
         const userConfigPath = join(bundle.paths.config, "user.json");
         const current = existsSync(userConfigPath) ? JSON.parse(await readFile(userConfigPath, "utf8")) : {};
         current.providers = providersCfg;
         await writeFile(userConfigPath, JSON.stringify(current, null, 2), { mode: 0o600 });
-        if (kind === "openai") {
+        if (kind !== "ollama") {
           const secrets = detectSecretStore(bundle.paths.credentials);
-          out(`Set the API key (input hidden, stored in ${secrets.backend}):`);
+          out(`Set the API key for ${kind} (input hidden, stored in ${secrets.backend}):`);
           const key = await readHiddenKey();
-          await secrets.set(`provider:${id}`, key);
-          const updated = JSON.parse(await readFile(userConfigPath, "utf8"));
-          updated.providers = updated.providers.map((p: { id: string; credentialRef?: string }) => (p.id === id ? { ...p, credentialRef: `provider:${id}` } : p));
-          await writeFile(userConfigPath, JSON.stringify(updated, null, 2), { mode: 0o600 });
+          if (key) {
+            await secrets.set(`provider:${id}`, key);
+            newProvider.credentialRef = `provider:${id}`;
+            const updated = JSON.parse(await readFile(userConfigPath, "utf8"));
+            updated.providers = updated.providers.map((p: { id: string }) => (p.id === id ? newProvider : p));
+            await writeFile(userConfigPath, JSON.stringify(updated, null, 2), { mode: 0o600 });
+          }
         }
-        out(`Provider ${id} saved. Restart qofeno to use it.`);
+        out(`Provider ${id} (${kind}) saved.`);
         return 0;
       }
       if (sub === "test") {
@@ -605,6 +614,10 @@ async function runManagementCommand(command: string, bundle: Bundle, args: Retur
         return 22;
       }
     }
+    case "onboarding": {
+      const st = new Stylizer({ theme: pickTheme(bundle.config.merged.theme), colorEnabled: bundle.capabilities.colorEnabled, unicode: bundle.capabilities.unicode });
+      return await runOnboarding(bundle, st);
+    }
     case "setup": {
       const st = new Stylizer({ theme: pickTheme(bundle.config.merged.theme), colorEnabled: bundle.capabilities.colorEnabled, unicode: bundle.capabilities.unicode });
       const { LocalModelSetup } = await import("@agent-qofeno/providers");
@@ -632,6 +645,7 @@ async function runManagementCommand(command: string, bundle: Bundle, args: Retur
       }
       return result.status === "no-ollama" ? 4 : result.status === "failed" ? 20 : 0;
     }
+    case "model":
     case "models": {
       const { detectHardware, recommendModels } = await import("@agent-qofeno/runtime");
       const hw = await detectHardware();
@@ -658,11 +672,26 @@ async function runManagementCommand(command: string, bundle: Bundle, args: Retur
         out(value === undefined ? "(unset)" : JSON.stringify(value));
         return 0;
       }
+      if (sub === "set" && args.positional[2] && args.positional[3] !== undefined) {
+        const key = args.positional[2];
+        let val: unknown = args.positional.slice(3).join(" ");
+        try {
+          val = JSON.parse(String(val));
+        } catch {
+          // Keep as string
+        }
+        const userConfigPath = join(bundle.paths.config, "user.json");
+        const current = existsSync(userConfigPath) ? JSON.parse(await readFile(userConfigPath, "utf8")) : {};
+        (current as Record<string, unknown>)[key] = val;
+        await writeFile(userConfigPath, JSON.stringify(current, null, 2), { mode: 0o600 });
+        out(`config ${key} = ${JSON.stringify(val)}`);
+        return 0;
+      }
       if (sub === "policy") {
         out(JSON.stringify(bundle.config.merged.security ?? {}, null, 2));
         return 0;
       }
-      errOut("usage: qofeno config get <key>|path|policy");
+      errOut("usage: qofeno config get <key>|set <key> <val>|path|policy");
       return 2;
     }
     default:

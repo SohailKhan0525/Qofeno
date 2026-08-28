@@ -18,7 +18,9 @@ const VALUE_FLAGS = new Set([
   "output-format",
   "resume",
   "session-id",
+  "session-name",
   "model",
+  "m",
   "mode",
   "profile",
   "project-root",
@@ -86,19 +88,26 @@ OPTIONS
   -h, --help                    show help
 
 COMMANDS
+  onboarding                    guided first-run onboarding & setup wizard
+  setup                         guided local model installer (hardware scored)
+  models                        detect hardware & list installed/recommended models
   sessions list|rm <id>|export <id> [path]
   config get <key>|set <key> <value>|path|policy
   permissions list|grant|deny|revoke <id>
   provider add|list|test <kind> [baseUrl]
   memory list|add <text>|forget <id>|clear
   knowledge index <file>|search <query>
+  repo index|search <query>|symbols <name>
   tools list
   agents run "<goal>"
   workflows validate <file>
   extensions install <dir>|list|enable <id>|disable <id>
+  serve [--port 7931]           run local API & web app server
+  backup [dest]                 create integrity-verified backup archive
+  restore <archive>             restore from backup archive
+  diff <file1> <file2>          render styled terminal diff
   doctor                        environment diagnostics (redacted)
   privacy                       data map & network posture
-  update                        check for newer releases
   version                       print version
 
 EXIT CODES
