@@ -11,9 +11,9 @@
 | `qofeno --resume <id>` | resume a specific session |
 | `--mode plan\|review\|execute\|autonomous\|restricted` | set starting mode |
 
-### Slash commands (in session)
+### Shortcuts & Slash commands (in session)
 
-`/help` · `/model [id]` · `/mode <m>` · `/permissions` · `/memory [text]` · `/memory-forget <id>` · `/knowledge index <file> | search <q>` · `/compact` · `/sessions` · `/resume <id>` · `/export [path]` · `/tools` · `/privacy` · `/clear` · `/quit`
+`!<cmd>` (execute shell command directly) · `@<file>` (include file context) · `/help` · `/local-model` · `/model [id]` · `/mode <m>` · `/permissions` · `/memory [text]` · `/memory-forget <id>` · `/knowledge index <file> | search <q>` · `/compact` · `/sessions` · `/resume <id>` · `/export [path]` · `/tools` · `/privacy` · `/clear` · `/quit`
 
 ## Headless
 
@@ -30,7 +30,6 @@ Headless runs are **fail-closed**: tools execute only when explicit permission g
 ## Management commands
 
 ```bash
-onboarding                                              # guided interactive onboarding & hardware setup
 setup                                                   # guided local model pull (hardware scored)
 models                                                  # detect hardware & list installed/recommended models
 sessions list | rm <id> | export <id> [path]

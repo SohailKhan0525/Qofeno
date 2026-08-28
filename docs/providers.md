@@ -5,7 +5,6 @@ Qofeno is provider-neutral. Adapters implement a unified interface (`listModels`
 ## Adding providers
 
 ```bash
-qofeno onboarding                                     # guided setup wizard for local & cloud models
 qofeno setup                                          # hardware-scored local model pull wizard
 qofeno provider add ollama http://localhost:11434     # local inference, no key needed
 qofeno provider add openrouter                        # OpenRouter unified multi-model API

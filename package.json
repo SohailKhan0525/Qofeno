@@ -1,6 +1,6 @@
 {
   "name": "qofeno",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Qofeno CLI — an open-source, terminal-native AI agent platform. Local-first, provider-neutral, permission-enforced.",
   "license": "Apache-2.0",
   "type": "module",

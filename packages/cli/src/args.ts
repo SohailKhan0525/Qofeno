@@ -128,7 +128,6 @@ COMMANDS
   diff <file1> <file2>          render styled terminal diff
   completion [shell]            generate shell completion script (bash, zsh, fish, powershell)
   update [--check]              check for latest updates
-  onboarding                    guided first-run setup wizard
   setup                         guided local model discovery & installer
   permissions [list|grant|deny|revoke|reset]
   memory [list|add|forget|clear]

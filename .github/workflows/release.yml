@@ -13,7 +13,6 @@ on:
 permissions:
   contents: write
   id-token: write # npm provenance / attestations
-  packages: write
 
 concurrency:
   group: release-${{ github.ref }}
@@ -62,130 +61,16 @@ jobs:
       - name: Sync version
         run: node scripts/check-and-bump-version.mjs
       - run: npm run build
-      - name: Generate SBOM (CycloneDX)
-        run: node scripts/sbom.mjs > sbom.json
-      - name: Publish all packages with provenance & verification
+      - name: Inspect package contents (dry-run check)
+        run: npm pack --dry-run
+      - name: Publish all packages to NPM with provenance & verification
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: node scripts/publish-all.mjs
 
-  desktop:
-    needs: [verify, version-gate]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { os: ubuntu-latest, target: linux }
-          - { os: windows-latest, target: windows }
-          - { os: macos-latest, target: macos }
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: swatinem/rust-cache@v2
-      - run: npm run -w @agent-qofeno/app build
-      - name: Install Tauri CLI
-        run: npm i -g @tauri-apps/cli@2
-      - name: Build desktop bundles
-        working-directory: apps/desktop/src-tauri
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        shell: bash
-        run: |
-          if [ "$(uname)" = "Linux" ]; then
-            sudo apt-get update -qq && sudo apt-get install -y -qq libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev >/dev/null || true
-          fi
-          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
-            tauri build --config tauri.conf.json
-          else
-            echo "::warning::No updater signing key — building desktop artifacts"
-            TAURI_SIGNING_PRIVATE_KEY_PASSWORD="" tauri build --config tauri.conf.json || \
-              echo "::warning::Some bundle targets unavailable on runner; artifacts uploaded where produced"
-          fi
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: desktop-${{ matrix.target }}
-          path: |
-            apps/desktop/src-tauri/target/release/bundle/**/*
-            apps/desktop/src-tauri/target/release/*.deb
-            apps/desktop/src-tauri/target/release/*.AppImage
-            apps/desktop/src-tauri/target/release/*.msi
-            apps/desktop/src-tauri/target/release/*.exe
-            apps/desktop/src-tauri/target/release/*.dmg
-          if-no-files-found: ignore
-          retention-days: 14
-
-  android:
-    needs: [verify, version-gate]
-    runs-on: ubuntu-latest
-    environment: mobile-release
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Rust Android target
-        run: rustup target add aarch64-linux-android
-      - name: Install Tauri CLI + cargo-ndk
-        run: |
-          npm i -g @tauri-apps/cli@2
-          cargo install cargo-ndk --locked || true
-      - run: npm ci
-      - run: npm run -w @agent-qofeno/app build
-      - name: Init Android project
-        working-directory: apps/desktop/src-tauri
-        run: |
-          if [ ! -d gen/android ]; then
-            npx @tauri-apps/cli android init --ci || true
-          fi
-      - name: Decode signing keystore (if present)
-        env:
-          QOFENO_KEYSTORE_BASE64: ${{ secrets.QOFENO_KEYSTORE_BASE64 }}
-        run: |
-          if [ -n "$QOFENO_KEYSTORE_BASE64" ]; then
-            echo "$QOFENO_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/qofeno.jks"
-            echo "QOFENO_KEYSTORE_PATH=$RUNNER_TEMP/qofeno.jks" >> "$GITHUB_ENV"
-          fi
-      - name: Assemble APK & AAB
-        working-directory: apps/desktop/src-tauri
-        env:
-          QOFENO_KEYSTORE_PATH: ${{ env.QOFENO_KEYSTORE_PATH }}
-          QOFENO_KEYSTORE_PASSWORD: ${{ secrets.QOFENO_KEYSTORE_PASSWORD }}
-          QOFENO_KEY_ALIAS: ${{ secrets.QOFENO_KEY_ALIAS }}
-          QOFENO_KEY_PASSWORD: ${{ secrets.QOFENO_KEY_PASSWORD }}
-        run: |
-          if [ -n "$QOFENO_KEYSTORE_PATH" ]; then
-            npx @tauri-apps/cli android build --target aarch64 --apk --aab || echo "::warning::Signed Android build failed"
-          else
-            echo "::notice::Building debug APK artifact"
-            npx @tauri-apps/cli android build --target aarch64 --apk --debug || echo "::warning::Android build failed"
-          fi
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: android-apk
-          path: |
-            **/*.apk
-            **/*.aab
-          if-no-files-found: ignore
-          retention-days: 14
-
   github-release:
-    needs: [verify, version-gate, npm-publish, desktop, android]
+    needs: [verify, version-gate, npm-publish]
     if: always() && !cancelled() && needs.verify.result == 'success'
     runs-on: ubuntu-latest
     steps:
@@ -195,21 +80,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Prepare release directory and metadata
+      - name: Prepare release metadata & assets
         run: |
           mkdir -p dist-release
           git archive --format=tar.gz -o dist-release/qofeno-${{ needs.version-gate.outputs.version }}-source.tar.gz HEAD
           node scripts/sbom.mjs > dist-release/sbom.json
-          cp docs/command-parity.json dist-release/
           cp docs/COMMAND_PARITY.md dist-release/
-      - uses: actions/download-artifact@v4
-        with:
-          path: downloaded-artifacts
-      - name: Collect all OS release binaries (.deb, .AppImage, .rpm, .msi, .exe, .dmg, .apk, .aab)
-        run: |
-          find downloaded-artifacts -type f \( -name "*.deb" -o -name "*.AppImage" -o -name "*.appimage" -o -name "*.rpm" -o -name "*.msi" -o -name "*.exe" -o -name "*.dmg" -o -name "*.apk" -o -name "*.aab" \) -exec cp {} dist-release/ \; || true
           cd dist-release && sha256sum * > SHA256SUMS.txt
-          echo "=== Prepared Release Assets ==="
+          echo "=== Prepared NPM Release Assets ==="
           ls -la
       - uses: softprops/action-gh-release@v2
         with:

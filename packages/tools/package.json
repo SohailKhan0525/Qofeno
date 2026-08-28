@@ -1,6 +1,6 @@
 {
   "name": "@agent-qofeno/tools",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Qofeno CLI - tools",
   "license": "Apache-2.0",
   "type": "module",
@@ -17,10 +17,10 @@
     "test": "node --test dist/test/"
   },
   "dependencies": {
-    "@agent-qofeno/core": "^0.2.1",
-    "@agent-qofeno/security": "^0.2.1",
-    "@agent-qofeno/runtime": "^0.2.1",
-    "@agent-qofeno/config": "^0.2.1",
-    "@agent-qofeno/knowledge": "^0.2.1"
+    "@agent-qofeno/core": "^0.2.2",
+    "@agent-qofeno/security": "^0.2.2",
+    "@agent-qofeno/runtime": "^0.2.2",
+    "@agent-qofeno/config": "^0.2.2",
+    "@agent-qofeno/knowledge": "^0.2.2"
   }
 }

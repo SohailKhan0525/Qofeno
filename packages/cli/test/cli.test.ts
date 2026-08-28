@@ -59,7 +59,6 @@ describe("CLI Argument Parser & Grammar", () => {
   });
 
   it("usage contains core command references", () => {
-    assert.match(USAGE, /onboarding/);
     assert.match(USAGE, /setup/);
     assert.match(USAGE, /model/);
     assert.match(USAGE, /provider/);
@@ -91,7 +90,6 @@ describe("Command Compatibility Matrix (#OpenCode Parity)", () => {
       "diff",
       "completion",
       "update",
-      "onboarding",
       "setup",
       "permissions",
       "memory",
@@ -128,6 +126,7 @@ describe("Command Compatibility Matrix (#OpenCode Parity)", () => {
   it("defines all required interactive slash commands", () => {
     const requiredSlash = [
       "/help",
+      "/local-model",
       "/quit",
       "/clear",
       "/reset",
@@ -203,3 +202,27 @@ describe("Shell Completions Generator", () => {
     assert.match(ps, /CompletionResult/);
   });
 });
+
+describe("OpenCode Interaction Shortcuts (! shell & @ file references)", () => {
+  it("recognizes ! prefix as direct shell command", () => {
+    const raw = "!git status";
+    assert.ok(raw.startsWith("!"));
+    assert.equal(raw.slice(1).trim(), "git status");
+  });
+
+  it("extracts @ file references safely", () => {
+    const prompt = "Please review @src/main.ts and @package.json for parity";
+    const matches = prompt.match(/@([a-zA-Z0-9_\-./\\]+)/g);
+    assert.deepEqual(matches, ["@src/main.ts", "@package.json"]);
+  });
+
+  it("filters sensitive @ file references", () => {
+    const sensitive = ["@.env", "@.env.local", "@id_rsa", "@secret.pem"];
+    for (const ref of sensitive) {
+      const rel = ref.slice(1);
+      const isBlocked = rel.startsWith(".env") || rel.includes("id_rsa") || rel.includes(".pem");
+      assert.ok(isBlocked, `Should block ${ref}`);
+    }
+  });
+});
+

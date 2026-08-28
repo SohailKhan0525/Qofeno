@@ -27,7 +27,6 @@ import { WorkflowEngine } from "@agent-qofeno/workflows";
 import { ExtensionHost } from "@agent-qofeno/ext";
 import { buildBundle, type Bundle } from "@agent-qofeno/bundle";
 import { parseArgs, USAGE, outputFormatOf } from "./args.js";
-import { runOnboarding } from "./onboarding.js";
 import { COMMAND_MATRIX, SLASH_COMMANDS } from "./command-matrix.js";
 import { generateCompletion } from "./completion.js";
 
@@ -125,7 +124,7 @@ async function runInteractive(bundle: Bundle, args: ReturnType<typeof parseArgs>
 
   const models = await bundle.providers.allModels();
   if (models.length === 0) {
-    out(st.warning("No AI providers or local models reachable yet. Run `qofeno onboarding` to configure, or run `qofeno setup` to install a local model."));
+    out(st.warning("No AI providers or local models reachable yet. Run `qofeno setup` or `/local-model` in chat to install a model."));
   }
 
   const repl = new QofenoRepl({
@@ -862,11 +861,6 @@ async function runManagementCommand(command: string, bundle: Bundle, args: Retur
       }
     }
 
-    case "onboarding":
-    case "welcome": {
-      const st = new Stylizer({ theme: pickTheme(bundle.config.merged.theme), colorEnabled: bundle.capabilities.colorEnabled, unicode: bundle.capabilities.unicode });
-      return await runOnboarding(bundle, st);
-    }
 
     case "setup":
     case "install-model": {

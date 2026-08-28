@@ -347,22 +347,6 @@ export const COMMAND_MATRIX: CommandSpec[] = [
     testPath: "packages/cli/test/cli.test.ts",
   },
   {
-    name: "onboarding",
-    aliases: ["welcome"],
-    description: "Guided first-run configuration wizard and provider setup",
-    syntax: "qofeno onboarding",
-    arguments: [],
-    options: [],
-    interactiveSupport: true,
-    tuiSupport: true,
-    noninteractiveSupport: false,
-    slashEquivalent: undefined,
-    requiredPermissions: ["credentials.manage"],
-    exitCodes: [0, 1, 130],
-    docPath: "docs/cli-reference.md",
-    testPath: "packages/cli/test/cli.test.ts",
-  },
-  {
     name: "setup",
     aliases: ["install-model"],
     description: "Guided local model discovery, hardware scoring, and installation wizard",
@@ -620,6 +604,7 @@ export const COMMAND_MATRIX: CommandSpec[] = [
 
 export const SLASH_COMMANDS: SlashCommandSpec[] = [
   { command: "/help", aliases: ["/?"], description: "Show available commands and usage guide", cliEquivalent: "qofeno help" },
+  { command: "/local-model", aliases: ["/local"], description: "Discover, recommend and manage local models inside chat", cliEquivalent: "qofeno model recommend" },
   { command: "/quit", aliases: ["/exit", "/q"], description: "Exit the interactive session cleanly", cliEquivalent: undefined },
   { command: "/clear", aliases: ["/cls"], description: "Start a fresh session with clean context", cliEquivalent: "qofeno session clear" },
   { command: "/reset", aliases: ["/new"], description: "Reset session history and start fresh", cliEquivalent: "qofeno session clear" },

@@ -37,7 +37,6 @@ export interface QofenoConfig {
   profile?: string;
   telemetryEnabled?: boolean;
   reducedMotion?: boolean;
-  onboardingCompleted?: boolean;
   maxAgentSteps?: number;
   agentTimeoutMs?: number;
   costBudgetUsd?: number;
@@ -62,7 +61,6 @@ const CONFIG_SCHEMA = s.object(
     profile: s.string({ max: 64 }).optional(),
     telemetryEnabled: s.boolean().optional(),
     reducedMotion: s.boolean().optional(),
-    onboardingCompleted: s.boolean().optional(),
     maxAgentSteps: s.number({ int: true, min: 1, max: 1000 }).optional(),
     agentTimeoutMs: s.number({ int: true, min: 1000, max: 3_600_000 }).optional(),
     costBudgetUsd: s.number({ min: 0, max: 100000 }).optional(),

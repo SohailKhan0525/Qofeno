@@ -106,10 +106,21 @@ export class QofenoRepl {
     this.d.render.info(`Mode: ${mode} — ${MODE_DESCRIPTIONS[mode]}`);
   }
 
-  /** True when input was a slash command handled internally. */
+  /** True when input was a slash command or ! shell command handled internally. */
   async handleInput(input: string): Promise<{ handled: boolean; output?: string }> {
     const trimmed = input.trim();
     if (!trimmed) return { handled: true };
+    if (trimmed.startsWith("!")) {
+      const cmd = trimmed.slice(1).trim();
+      if (!cmd) return { handled: true, output: "Usage: !<command> (e.g. !git status, !npm test, !ls)" };
+      const toolCtx = this.makeToolContext(false);
+      this.d.render.activity(`executing shell: ${cmd}`);
+      const res = await this.d.tools.invoke("shell", { command: cmd }, toolCtx);
+      if (res.output) {
+        this.d.render.assistantChunk(res.output.trim() + "\n");
+      }
+      return { handled: true, output: res.output };
+    }
     if (trimmed.startsWith("/")) return this.slash(trimmed);
     await this.sendToModel(trimmed);
     return { handled: false };
@@ -126,8 +137,11 @@ export class QofenoRepl {
         return {
           handled: true,
           output: [
-            "Qofeno Slash Commands:",
+            "Qofeno Slash Commands & Shortcuts:",
+            "  !<cmd>                    execute shell command directly (e.g. !git status, !ls)",
+            "  @<file>                   reference and inject file context (e.g. @src/main.ts)",
             "  /help, /?                 show this command guide",
+            "  /local-model, /local      discover, recommend & manage local models in-chat",
             "  /model, /m [id]           inspect or switch active model",
             "  /provider [id]            manage configured providers",
             "  /mode <plan|review|execute|autonomous|restricted>",
@@ -157,6 +171,45 @@ export class QofenoRepl {
             "  /quit, /exit, /q          exit interactive mode",
           ].join("\n"),
         };
+
+      case "local-model":
+      case "local": {
+        // Step A & B: Discover existing local models
+        const { OllamaProvider } = await import("@agent-qofeno/providers");
+        const { detectHardware, recommendModels } = await import("@agent-qofeno/runtime");
+        const ollama = new OllamaProvider({ id: "ollama" });
+        const health = await ollama.health();
+        const lines: string[] = [];
+
+        if (health.status === "healthy") {
+          const installed = await ollama.listModels();
+          if (installed.length > 0) {
+            lines.push("Discovered Installed Local Models (Ollama):");
+            for (const m of installed) {
+              const isCur = this.currentModelId === `ollama:${m.modelId}`;
+              lines.push(`  ${isCur ? "★ [active] " : "• "}${m.modelId.padEnd(28)} (~${m.resourceHint || "GGUF"})`);
+            }
+            lines.push("\nTo switch to an installed model, type `/model ollama:<name>`");
+          } else {
+            lines.push("Ollama is running, but no local models are installed yet.");
+          }
+        } else {
+          lines.push("No active local runtime found at localhost:11434 (Ollama offline).");
+        }
+
+        // Step C & D: Detect Hardware & Recommend Hugging Face Models
+        const hw = await detectHardware();
+        lines.push(`\nHardware Analysis: ${hw.cpuCores} cores · ${hw.ramTotalGb}GB RAM · ${hw.arch}${hw.gpu ? ` · ${hw.gpu.name}${hw.gpu.vramGb ? ` (${hw.gpu.vramGb}GB VRAM)` : ""}` : ""} → Tier: ${hw.tier} (Score: ${hw.score}/100)`);
+
+        const recs = recommendModels(hw);
+        lines.push("\nRecommended Local Models (Hugging Face / Ollama):");
+        recs.forEach((r, i) => {
+          lines.push(`  [${i + 1}] ${r.label.padEnd(24)} (${r.paramsB}, ~${r.diskGbApprox}GB disk, RAM ≥ ${r.minRamGb}GB)\n      Why: ${r.why}\n      Upstream: ${r.hfUrl}`);
+        });
+
+        lines.push("\nTo install a model directly, run:\n  ollama pull " + (recs[0]?.id || "qwen2.5-coder:7b"));
+        return { handled: true, output: lines.join("\n") };
+      }
 
       case "model":
       case "m": {
@@ -517,6 +570,28 @@ export class QofenoRepl {
     this.currentModelId ??= `${routed.providerId}:${routed.modelId}`;
     const { provider, model } = await this.d.providers.findModel(this.currentModelId);
 
+    // OpenCode-style @ file reference expansion
+    let effectiveUserText = userText;
+    const fileRefs = userText.match(/@([a-zA-Z0-9_\-./\\]+)/g);
+    if (fileRefs) {
+      for (const ref of fileRefs) {
+        const rel = ref.slice(1);
+        if (rel.startsWith(".env") || rel.includes("id_rsa") || rel.includes(".pem")) continue;
+        const target = resolve(this.d.projectRoot, rel);
+        if (existsSync(target)) {
+          try {
+            const raw = await readFile(target, "utf8");
+            if (raw.length < 60_000) {
+              effectiveUserText += `\n\n--- Content of @${rel} ---\n${raw}\n--- End of @${rel} ---`;
+              this.d.render.activity(`included @${rel} (${raw.length} bytes)`);
+            }
+          } catch {
+            /* ignore binary or unreadable files */
+          }
+        }
+      }
+    }
+
     if (!this.sessionId) {
       const s = await this.d.sessions.create({
         title: userText.slice(0, 60),
@@ -527,14 +602,14 @@ export class QofenoRepl {
       this.sessionId = s.id;
     }
 
-    const userMsg = await this.d.sessions.appendMessage(this.sessionId, { role: "user", content: userText, status: "completed" as const });
+    const userMsg = await this.d.sessions.appendMessage(this.sessionId, { role: "user", content: effectiveUserText, status: "completed" as const });
 
     // Plan/review modes constrain what tools may do this turn.
     const planOnly = this.mode === "plan" || this.mode === "review";
 
     const memories = this.d.config.merged.security?.localOnly === false ? [] : await this.d.memory.relevant(this.d.projectRoot, this.sessionId);
     const collections = await this.d.store.listCollections(this.d.projectRoot);
-    const knowledge = collections.length ? await this.d.knowledge.retrieve(collections.map((c) => c.id), userText, 3) : [];
+    const knowledge = collections.length ? await this.d.knowledge.retrieve(collections.map((c) => c.id), effectiveUserText, 3) : [];
 
     const history = await this.d.sessions.lineage(this.sessionId, userMsg.parentId ?? userMsg.id);
     const assembled = this.d.context.assemble({
@@ -543,7 +618,7 @@ export class QofenoRepl {
       knowledge,
       history: [
         ...history.filter((m) => m.id !== userMsg.id).map((m) => ({ role: m.role, content: m.content })),
-        { role: "user" as const, content: userText },
+        { role: "user" as const, content: effectiveUserText },
       ],
     });
 

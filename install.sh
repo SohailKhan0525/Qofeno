@@ -111,7 +111,7 @@ if command -v qofeno >/dev/null 2>&1; then
   qofeno doctor || true
   echo ""
   echo -e "${BOLD}${GREEN}Ready to start!${RESET}"
-  echo -e "Run ${BOLD}qofeno onboarding${RESET} for the guided setup wizard, or ${BOLD}qofeno${RESET} to begin an interactive session."
+  echo -e "Run ${BOLD}qofeno${RESET} to begin an interactive session, or ${BOLD}qofeno setup${RESET} to install a local model."
 else
   # Check if linked in local bin
   if [ -f "$HOME/.local/bin/qofeno" ]; then

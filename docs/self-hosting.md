@@ -12,18 +12,12 @@ QOFENO_API_TOKEN=$(openssl rand -hex 24) qofeno serve --port 7931 --token "$QOFE
 - With a token set, all `/api/*` routes require `Authorization: Bearer …` (constant-time comparison).
 - Security headers (CSP, nosniff, frame-deny), rate limiting and JSON body caps are always on.
 
-## Docker
+## Background Service (systemd / pm2)
 
 ```bash
-docker build -t qofeno .
-docker run -p 7931:7931 \
-  -v qofeno-data:/data \
-  -e QOFENO_HOME=/data \
-  -e QOFENO_API_TOKEN=change-me \
-  qofeno
+# Using PM2 or Node supervisor
+npx pm2 start packages/server/dist/src/main.js --name qofeno-server -- --port 7931
 ```
-
-The image runs as non-root, contains only compiled JS + Node.
 
 ## API surface
 

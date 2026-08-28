@@ -21,7 +21,6 @@ Qofeno implements complete command parity with the OpenCode terminal interface c
 | `opencode diff` | `qofeno diff` | — | Yes | Yes | `/diff` |
 | `opencode completion` | `qofeno completion` | `completions` | No | Yes | — |
 | `opencode update` | `qofeno update` | `upgrade` | Yes | Yes | — |
-| `opencode onboarding` | `qofeno onboarding` | `welcome` | Yes | No | — |
 | `opencode setup` | `qofeno setup` | `install-model` | Yes | No | `/setup` |
 | `opencode permissions` | `qofeno permissions` | `perms` | Yes | Yes | `/permissions` |
 | `opencode memory` | `qofeno memory` | `mem` | Yes | Yes | `/memory` |
@@ -37,11 +36,14 @@ Qofeno implements complete command parity with the OpenCode terminal interface c
 | `opencode version` | `qofeno version` | `-v`, `--version` | Yes | Yes | `/version` |
 | `opencode help` | `qofeno help` | `-h`, `--help`, `/?` | Yes | Yes | `/help` |
 
-## Interactive TUI Slash Commands
+## Interactive TUI Shortcuts & Slash Commands
 
-| Slash Command | Aliases | Description | CLI Equivalent |
+| Shortcut / Command | Aliases | Description | CLI Equivalent |
 |:---|:---|:---|:---|
+| `!<command>` | — | Execute shell command directly in-chat | `qofeno run -- shell` |
+| `@<filepath>` | — | Reference and inject file content into context | — |
 | `/help` | `/?` | Display available commands & quick reference | `qofeno help` |
+| `/local-model` | `/local` | Discover, recommend & manage local models in-chat | `qofeno model recommend` |
 | `/quit` | `/exit`, `/q` | Exit the interactive session cleanly | — |
 | `/clear` | `/cls` | Clear current screen / buffer | `qofeno session clear` |
 | `/reset` | `/new` | Reset context and begin a new session | `qofeno session clear` |

@@ -1,6 +1,6 @@
 {
   "name": "@agent-qofeno/repl",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Qofeno CLI - repl",
   "license": "Apache-2.0",
   "type": "module",
@@ -17,14 +17,14 @@
     "test": "node --test dist/test/"
   },
   "dependencies": {
-    "@agent-qofeno/core": "^0.2.1",
-    "@agent-qofeno/config": "^0.2.1",
-    "@agent-qofeno/session": "^0.2.1",
-    "@agent-qofeno/knowledge": "^0.2.1",
-    "@agent-qofeno/ctx": "^0.2.1",
-    "@agent-qofeno/tools": "^0.2.1",
-    "@agent-qofeno/providers": "^0.2.1",
-    "@agent-qofeno/term": "^0.2.1",
-    "@agent-qofeno/input": "^0.2.1"
+    "@agent-qofeno/core": "^0.2.2",
+    "@agent-qofeno/config": "^0.2.2",
+    "@agent-qofeno/session": "^0.2.2",
+    "@agent-qofeno/knowledge": "^0.2.2",
+    "@agent-qofeno/ctx": "^0.2.2",
+    "@agent-qofeno/tools": "^0.2.2",
+    "@agent-qofeno/providers": "^0.2.2",
+    "@agent-qofeno/term": "^0.2.2",
+    "@agent-qofeno/input": "^0.2.2"
   }
 }
