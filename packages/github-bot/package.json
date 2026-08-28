@@ -1,11 +1,19 @@
 {
   "name": "@agent-qofeno/github-bot",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Qofeno GitHub App bot: verified webhooks + issue/PR automation",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
-  "exports": { ".": { "types": "./dist/src/index.d.ts", "default": "./dist/src/index.js" } },
-  "scripts": { "build": "tsc -p tsconfig.json", "start": "node dist/src/main.js" }
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/src/main.js"
+  }
 }
